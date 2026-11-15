@@ -34,5 +34,8 @@ ureq = { version = "2.12", default-features = false, features = ["json"] }
 [profile.dev]
 incremental = false
 
+# Não mude `codegen-units` aqui sem medir: qualquer ajuste de perfil invalida os
+# rlibs e recompila o kernel inteiro. O freio de memória fica em `.cargo/config.toml`
+# (`jobs`), que não altera a assinatura do perfil.
 [profile.dev.package."*"]
 opt-level = 2

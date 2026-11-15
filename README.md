@@ -36,6 +36,10 @@ cargo build                         # crates/forja-pdm
 tools/start-all.sh                  # sobe o que falta e mostra as portas
 ```
 
+O build compila o kernel inteiro na primeira vez (~25 min) e usa `jobs = 2`
+(`.cargo/config.toml`): a máquina não tem swap e paralelismo maior trava o
+sistema. Depois disso, mudança em `crates/` recompila em segundos.
+
 Portas: `8080` TeamCraft · `8081` docs · `8088` GridCraft · `8089` visualizador
 DXF · `8090` forja-pdm.
 
