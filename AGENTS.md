@@ -24,6 +24,10 @@ cargo fmt --check && cargo clippy -- -D warnings
 cargo run -p forja-pdm -- health                  # TeamCraft + vault
 cargo run -p forja-pdm -- tess ../PS-001.step     # relatório do kernel
 tools/start-all.sh && tools/status.sh
+
+# serviço de usuário (sobrevive a reboot; hoje o start/stop é por PID)
+cp services/forja-pdm.service ~/.config/systemd/user/
+systemctl --user daemon-reload && systemctl --user enable --now forja-pdm.service
 ```
 
 Build: `incremental = false` de propósito (o kernel é grande; incremental gasta

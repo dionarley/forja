@@ -1,0 +1,19 @@
+[Unit]
+Description=forja-pdm — serviço PDM da Forja (127.0.0.1:8090)
+# O TeamCraft é a fonte de verdade; sem ele o serviço sobe, mas não lista item.
+After=teamcraft.service
+Wants=teamcraft.service
+
+[Service]
+Type=simple
+WorkingDirectory=%h/codes-area/forja
+# Endereço vem do binário (FORJA_PDM_ADDR) para valer também fora do systemd.
+Environment=FORJA_PDM_ADDR=127.0.0.1:8090
+# O token NÃO vai aqui: unit do systemd é legível por qualquer processo do
+# usuário. O serviço lê o admin_token de %h/teamcraft/credentials.txt.
+ExecStart=%h/codes-area/forja/target/debug/forja-pdm serve 127.0.0.1:8090
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target
