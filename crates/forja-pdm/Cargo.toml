@@ -1,0 +1,23 @@
+[package]
+name = "forja-pdm"
+description = "Serviço PDM do Brasa: abre STEP do TeamCraft com o kernel solidcore"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+# O core do OpenPDM (fork `dionarley/open-pdm`, branch `forja`): repositórios
+# git, índice e handlers de formato. O handler de STEP é substituído aqui por um
+# que tessela de verdade.
+open-pdm-core = { path = "../../apps/open-pdm/crates/core" }
+# O kernel B-rep do solidcore (fork `dionarley/solidcore`, branch `forja`).
+solidcore-record = { path = "../../apps/solidcore/crates/solidcore-record" }
+solidcore-step = { path = "../../apps/solidcore/crates/solidcore-step" }
+solidcore-tess = { path = "../../apps/solidcore/crates/solidcore-tess" }
+
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tiny_http.workspace = true
+ureq.workspace = true

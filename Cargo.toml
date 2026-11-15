@@ -1,0 +1,38 @@
+[workspace]
+resolver = "2"
+members = ["crates/forja-pdm"]
+
+# As dependências são os forks em `apps/`, cada um com o próprio workspace.
+exclude = [
+  "apps/solidcraft",
+  "apps/solidcore",
+  "apps/cadcraft",
+  "apps/vectorcraft",
+  "apps/gridcraft",
+  "apps/cad-viewer",
+  "apps/open-pdm",
+  "apps/_gpl/opencadstudio",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.88"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/dionarley/forja"
+
+[workspace.dependencies]
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tiny_http = "0.12"
+ureq = { version = "2.12", default-features = false, features = ["json"] }
+
+# Build de desenvolvimento utilizável: dependências (kernel, libgit2, SQLite)
+# otimizadas, o serviço ainda com debug. Sem `incremental` para não gastar GB:
+# o kernel é grande e o incremental não compensa aqui.
+[profile.dev]
+incremental = false
+
+[profile.dev.package."*"]
+opt-level = 2

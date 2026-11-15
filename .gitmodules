@@ -1,0 +1,40 @@
+[submodule "apps/solidcore"]
+	path = apps/solidcore
+	url = https://github.com/dionarley/solidcore.git
+	branch = forja
+	shallow = true
+[submodule "apps/open-pdm"]
+	path = apps/open-pdm
+	url = https://github.com/dionarley/open-pdm.git
+	branch = forja
+	shallow = true
+[submodule "apps/solidcraft"]
+	path = apps/solidcraft
+	url = https://github.com/dionarley/solidcraft.git
+	branch = forja
+	shallow = true
+[submodule "apps/cadcraft"]
+	path = apps/cadcraft
+	url = https://github.com/dionarley/cadcraft.git
+	branch = forja
+	shallow = true
+[submodule "apps/vectorcraft"]
+	path = apps/vectorcraft
+	url = https://github.com/dionarley/vectorcraft.git
+	branch = forja
+	shallow = true
+[submodule "apps/gridcraft"]
+	path = apps/gridcraft
+	url = https://github.com/dionarley/gridcraft.git
+	branch = forja
+	shallow = true
+[submodule "apps/cad-viewer"]
+	path = apps/cad-viewer
+	url = https://github.com/dionarley/cad-viewer.git
+	branch = forja
+	shallow = true
+[submodule "apps/_gpl/opencadstudio"]
+	path = apps/_gpl/opencadstudio
+	url = https://github.com/dionarley/OpenCADStudio.git
+	branch = forja
+	shallow = true
