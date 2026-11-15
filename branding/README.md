@@ -52,8 +52,8 @@ aqui. Se falta um tom, ele entra na marca primeiro.
 | peça | arquivo | estado |
 |---|---|---|
 | visualizador de malha | `crates/forja-pdm/web/index.html` | tokens em CSS inline |
-| docs do produto | `diy_hot_gun/site` | tema do Docusaurus (marca do produto) |
-| prancha técnica | `diy_hot_gun/tools/plm/template.typ` | tipografia e cotas |
+| docs do produto | `brasa/site` | tema do Docusaurus (marca do produto) |
+| prancha técnica | `brasa/tools/plm/template.typ` | tipografia e cotas |
 
 O `gabarito` distribui uma cópia destes tokens para cada produto novo; o produto
 sobrescreve com a própria paleta.

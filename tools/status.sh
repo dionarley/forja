@@ -11,9 +11,9 @@ cd "$(dirname "$0")/.." || exit 2
 # porta, nome, onde mora
 SERVICES=(
   "8080 teamcraft   services/teamcraft"
-  "8081 docs        diy_hot_gun/site (Docusaurus)"
-  "8088 gridcraft   diy_hot_gun/tools/gridcraft"
-  "8089 viewer      diy_hot_gun/tools/cad-viewer"
+  "8081 docs        brasa/site (Docusaurus)"
+  "8088 gridcraft   brasa/tools/gridcraft"
+  "8089 viewer      brasa/tools/cad-viewer"
   "8090 forja-pdm   crates/forja-pdm"
 )
 

@@ -109,7 +109,7 @@ Cada fork tem um `FORJA-FORK.md` com o que muda e como rebasear do upstream.
 | **Tessera** | `dionarley/tessera` (privado) | assina contrato, laudo e proposta; dona das cores |
 | **Forja** | este repo | a bancada (apps + serviço + PDM) |
 | **Gabarito** | `dionarley/gabarito` | molde de produto, agnóstico |
-| **Brasa** | `diy_hot_gun` | primeiro produto (PS-001); marca própria |
+| **Brasa** | `brasa` | primeiro produto (PS-001); marca própria |
 
 A Forja não usa a marca de nenhum produto: `branding/` tem o símbolo da
 plataforma (bloco com a boca do forno) e os tokens vêm da Tessera.
