@@ -1,10 +1,11 @@
 # Build desta máquina: 4 núcleos, 11 GB de RAM, sem swap.
 #
-# `jobs` baixo e `codegen-units` limitado não são preferência: com o padrão, o
-# `rustc` do kernel (crate grande, `opt-level = 2`) abre dezenas de unidades de
-# código em paralelo, estoura a memória e o sistema trava/OOM-mata o build.
+# `jobs = 1` não é preferência: o kernel (`solidcore`) compila em `opt-level = 2`
+# e um único `rustc` dele chega a ~4 GB. Com 2 em paralelo a soma passou de 7 GB
+# e o sistema travou; sem swap não há margem para tentar de novo.
 #
-# Ajuste fino: suba `jobs` só depois de medir. Referência: 2 jobs × 8 unidades
-# fica abaixo de ~4 GB de pico.
+# Medido: jobs = 2 → pico 7037 MB (abortado). Se um dia houver swap, 2 é
+# razoável. Não mexa em `codegen-units` no perfil: invalida todos os rlibs e
+# recompila o kernel inteiro.
 [build]
-jobs = 2
+jobs = 1

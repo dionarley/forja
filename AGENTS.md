@@ -34,9 +34,9 @@ Build: `incremental = false` de propósito (o kernel é grande; incremental gast
 GB sem ganho). O primeiro build leva ~25 min; os seguintes, segundos.
 
 Esta máquina tem 4 núcleos e 11 GB **sem swap**: `.cargo/config.toml` fixa
-`jobs = 2`. Com o padrão (um `rustc` por núcleo, kernel em `opt-level = 2`) o
-build sobe a RAM a 100 % e o sistema trava antes de terminar. Não suba `jobs`
-sem medir o pico (`ps -eo rss,comm`).
+`jobs = 1`. Um `rustc` do kernel chega a ~4 GB; com 2 em paralelo a soma passou
+de 7 GB e o sistema travou duas vezes. Não suba `jobs` sem medir o pico
+(`ps -eo rss,comm`) e sem swap.
 
 Submodule não materializado fica como diretório vazio em `apps/` (não clone sem
 querer): só `solidcore` e `open-pdm` são necessários para compilar. Os outros
