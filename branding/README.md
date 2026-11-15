@@ -6,7 +6,7 @@ docs, `forja-pdm`) usam para não parecerem cinco ferramentas diferentes.
 
 ## De onde vêm os tokens
 
-Da marca pessoal, repo privado `dionarley/brand`:
+Da marca Tessera, repo privado `dionarley/tessera`:
 
 | token | hex | uso na plataforma |
 |---|---|---|
@@ -24,7 +24,7 @@ hex novo aqui. Se falta um tom, ele entra na marca primeiro.
 
 - **Marca de produto.** Brasa (e qualquer produto futuro) tem identidade própria,
   em repo próprio. Nada de logo de produto em `crates/` ou no visualizador.
-- **Monograma `d/` como logo de ferramenta.** A marca pessoal assina: rodapé,
+- **O mosaico da Tessera como logo de ferramenta.** A marca assina: rodapé,
   laudo, proposta.
 - **Fonte de CDN.** Plex Sans/Mono são OFL; se precisar, empacote.
 

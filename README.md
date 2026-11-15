@@ -1,6 +1,6 @@
 # Forja
 
-Plataforma de desenvolvimento de produto da **Dionarley**: os apps de CAD, vetor,
+Plataforma de desenvolvimento de produto da **Tessera**: os apps de CAD, vetor,
 planilha e PDM em um só lugar, com os forks que a gente realmente modifica.
 
 > A Forja é a bancada. O **Gabarito** é o molde de cada produto. O produto tem
