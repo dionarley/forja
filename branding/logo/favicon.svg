@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Forja">
+  <title>Forja — favicon</title>
+  <rect width="32" height="32" rx="7" fill="#1B1E22"/>
+  <path d="M5 9 A4 4 0 0 1 9 5 H23 A4 4 0 0 1 27 9 V23 A4 4 0 0 1 23 27 H9 A4 4 0 0 1 5 23 Z" fill="#2F6F8F"/>
+  <path d="M12 22 V18 A4 4 0 0 1 20 18 V22 Z" fill="#B4683A"/>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Forja">
+  <title>Forja — marca (bloco com a boca do forno)</title>
+  <rect x="8" y="8" width="240" height="240" rx="52" fill="#1B1E22"/>
+  <path d="M44 74 A30 30 0 0 1 74 44 H182 A30 30 0 0 1 212 74 V182 A30 30 0 0 1 182 212 H74 A30 30 0 0 1 44 182 Z" fill="#2F6F8F"/>
+  <path d="M90 196 V160 A38 38 0 0 1 166 160 V196 Z" fill="#B4683A"/>
+</svg>
