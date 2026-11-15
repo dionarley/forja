@@ -1,6 +1,6 @@
 [package]
 name = "forja-pdm"
-description = "Serviço PDM do Brasa: abre STEP do TeamCraft com o kernel solidcore"
+description = "Serviço PDM da Forja: abre STEP do TeamCraft e tessela com o kernel solidcore"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
