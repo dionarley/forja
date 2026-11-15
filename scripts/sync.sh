@@ -11,7 +11,6 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-root=$(pwd)
 
 NEEDED=(apps/solidcore apps/open-pdm)
 OPTIONAL=(apps/solidcraft apps/cadcraft apps/vectorcraft apps/gridcraft
@@ -34,7 +33,7 @@ materialize() {
 
 status() {
   printf '%-28s %-10s %s\n' submodule pinado materializado
-  while read -r mode sha stage path; do
+  while read -r mode sha _stage path; do
     [ "$mode" = 160000 ] || continue
     local state=nao
     if [ -e "$path/.git" ]; then

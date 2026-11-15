@@ -179,8 +179,8 @@ uso:
 ambiente:
   FORJA_TEAMCRAFT_URL     padrão http://127.0.0.1:8080
   FORJA_TEAMCRAFT_TOKEN   senão usa o admin_token de ~/teamcraft/credentials.txt
-  FORJA_VAULT   padrão ~/teamcraft/data/vault
-  FORJA_PDM_ADDR    endereço do `serve`
+  FORJA_VAULT             padrão ~/teamcraft/data/vault
+  FORJA_PDM_ADDR          endereço do `serve`
 ",
         version = env!("CARGO_PKG_VERSION")
     )

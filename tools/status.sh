@@ -6,7 +6,7 @@
 # Só leitura: não sobe, não instala, não derruba nada.
 set -uo pipefail
 
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 2
 
 # porta, nome, onde mora
 SERVICES=(
@@ -21,7 +21,7 @@ code() {
   curl -s -o /dev/null --max-time 2 -w '%{http_code}' "http://127.0.0.1:$1/" 2>/dev/null || true
 }
 
-printf '%-6s %-12s %-8s %s\n' porta serviço estado onde
+printf '%-6s %-12s %-6s %s\n' porta serviço http onde
 fail=0
 for line in "${SERVICES[@]}"; do
   read -r port name where <<<"$line"
@@ -30,7 +30,7 @@ for line in "${SERVICES[@]}"; do
     state=fora
     fail=1
   fi
-  printf '%-6s %-12s %-8s %s\n' "$port" "$name" "$state" "$where"
+  printf '%-6s %-12s %-6s %s\n' "$port" "$name" "$state" "$where"
 done
 
 exit "$fail"
