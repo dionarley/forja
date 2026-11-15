@@ -29,6 +29,10 @@ tools/start-all.sh && tools/status.sh
 Build: `incremental = false` de propósito (o kernel é grande; incremental gasta
 GB sem ganho). O primeiro build leva ~25 min; os seguintes, segundos.
 
+Submodule não materializado fica como diretório vazio em `apps/` (não clone sem
+querer): só `solidcore` e `open-pdm` são necessários para compilar. Os outros
+entram com `scripts/sync.sh --all`.
+
 ## Onde cada coisa mora
 
 | quero mudar | vou em |
