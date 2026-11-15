@@ -12,6 +12,11 @@ license.workspace = true
 # que tessela de verdade.
 open-pdm-core = { path = "../../apps/open-pdm/crates/core" }
 # O kernel B-rep do solidcore (fork `dionarley/solidcore`, branch `forja`).
+# `solidcore` e `solidcore-convert` entram para o `SurfaceTrims`: avaliam a
+# superfície e as arestas para projetar as pcurves que o STEP não traz.
+solidcore = { path = "../../apps/solidcore/crates/solidcore" }
+solidcore-convert = { path = "../../apps/solidcore/crates/solidcore-convert" }
+solidcore-ops = { path = "../../apps/solidcore/crates/solidcore-ops" }
 solidcore-record = { path = "../../apps/solidcore/crates/solidcore-record" }
 solidcore-step = { path = "../../apps/solidcore/crates/solidcore-step" }
 solidcore-tess = { path = "../../apps/solidcore/crates/solidcore-tess" }

@@ -101,7 +101,7 @@ fn handle(app: &App, request: tiny_http::Request) {
     }
 }
 
-fn mesh(app: &App, query: &BTreeMap<String, String>) -> Result<(u16, String, Vec<u8>)> {
+fn mesh(app: &App, query: &BTreeMap<String, String>) -> Result<(u16, &'static str, Vec<u8>)> {
     let opened = load(app, query)?;
     let (metadata, handler) = opened.metadata()?;
     let mut cache = app
