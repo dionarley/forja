@@ -4,3 +4,6 @@
 node_modules/
 .env
 credentials.toml
+
+# bytecode de ferramentas Python
+tools/__pycache__/

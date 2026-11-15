@@ -36,7 +36,8 @@ forja/
 
 ```sh
 scripts/sync.sh                     # materializa solidcore + open-pdm (path deps)
-cargo build -p forja-pdm            # serviço; primeiro build ~25 min
+tools/build.sh start                # serviço (padrão: -p forja-pdm), em segundo plano
+tools/build.sh watch                # acompanha ao vivo
 scripts/service.sh start            # 127.0.0.1:8090
 tools/status.sh                     # as cinco portas, uma linha cada
 ```
@@ -45,6 +46,28 @@ O build compila o kernel inteiro na primeira vez (~25 min, com `jobs = 1`).
 O limite vem de `.cargo/config.toml`: a máquina não tem swap e um único `rustc`
 do kernel chega a ~6 GB — dois em paralelo estouram a RAM e travam o sistema.
 Depois disso, mudança em `crates/` recompila em segundos.
+
+### Acompanhar o build
+
+`tools/build.sh start` compila em segundo plano com log completo: cada linha do
+cargo chega com a hora, então o tempo de cada crate sai do próprio log.
+
+| comando | o que mostra |
+|---|---|
+| `tools/build.sh status` | retrato: crate atual, tempo nele, RSS, RAM livre, pico, progresso e ETA |
+| `tools/build.sh watch` | o mesmo, atualizando a cada 2 s |
+| `tools/build.sh log -n 40` / `-f` | saída do cargo, com hora, do fim ou ao vivo |
+| `tools/build.sh errors` | só `error`/`warning` |
+| `tools/build.sh stop` | mata o build inteiro (grupo de processos) |
+| `tools/build.sh history` | builds anteriores: resultado, tempo, pico de RAM |
+| `tools/build.sh timings --open` | gantt do cargo (`target/cargo-timings`), por unidade |
+
+O `status` também funciona para um build iniciado na mão (`cargo build`): ele lê
+os processos do repo, mas aí não há log, progresso nem pico.
+
+A guarda de memória é a mesma que travava a máquina antes: se a soma de
+`rustc`/`cargo`/`cc`/`ld` passar de `FORJA_BUILD_MEM_MB` (padrão 9000 MB), o build
+é morto e o motivo fica no log. Estado em `.run/build/` (fora do git).
 
 Para o serviço voltar sozinho depois de um reboot:
 

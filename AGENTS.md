@@ -19,7 +19,9 @@ Monorepo da plataforma. Leia `docs/STYLE.md` (nomenclatura e estilo) e
 
 ```sh
 scripts/sync.sh                                   # submodules (solidcore, open-pdm)
-cargo build                                       # crates/forja-pdm
+tools/build.sh start                              # build com log, progresso e guarda de RAM
+tools/build.sh watch                              # crate atual, RSS, ETA, pico
+cargo build                                       # build cru (sem log nem guarda)
 cargo fmt --check && cargo clippy -- -D warnings
 cargo run -p forja-pdm -- health                  # TeamCraft + vault
 cargo run -p forja-pdm -- tess ../PS-001.step     # relatório do kernel
@@ -32,6 +34,10 @@ systemctl --user daemon-reload && systemctl --user enable --now forja-pdm.servic
 
 Build: `incremental = false` de propósito (o kernel é grande; incremental gasta
 GB sem ganho). O primeiro build leva ~25 min; os seguintes, segundos.
+
+Use `tools/build.sh start` (não `cargo build` na mão): ele grava o log com hora,
+mostra progresso/ETA e mata o build se a soma de `rustc` passar de
+`FORJA_BUILD_MEM_MB`. Sem log, um build de 25 min é indistinguível de um travado.
 
 Esta máquina tem 4 núcleos e 11 GB **sem swap**: `.cargo/config.toml` fixa
 `jobs = 1`. Um `rustc` do kernel chega a ~4 GB; com 2 em paralelo a soma passou
