@@ -43,7 +43,6 @@ DEFAULT_ARGS = ["-p", "forja-pdm"]
 MEM_LIMIT_MB = int(os.environ.get("FORJA_BUILD_MEM_MB", "9000"))
 
 COMPILING = re.compile(r"^\s*Compiling (\S+)(?: v(\S+))?")
-FINISHED = re.compile(r"^\s*Finished\s+(.+?)\s+in\s+([0-9.]+)(m?s)")
 LOCK = "Blocking waiting for file lock"
 DIAG = re.compile(r"^(error|warning)(\[[^\]]+\])?:")
 
@@ -216,25 +215,23 @@ def summarize(events: list[Event]) -> dict:
         if m:
             starts[m.group(1)] = ev.t
             continue
-        if text.startswith('{"reason":"compiler-artifact"'):
-            done += 1
+        if text.startswith("{"):
             try:
-                art = json.loads(text)
+                msg = json.loads(text)
             except ValueError:
+                msg = None
+            if isinstance(msg, dict):
+                reason = msg.get("reason")
+                if reason == "compiler-artifact":
+                    done += 1
+                    name = (msg.get("target") or {}).get("name")
+                    if name and name in starts:
+                        durations.append((name, ev.t - starts.pop(name)))
+                elif reason == "build-script-executed":
+                    done += 1
+                elif reason == "build-finished":
+                    finished = msg.get("success")
                 continue
-            name = art.get("target", {}).get("name")
-            if name and name in starts:
-                durations.append((name, ev.t - starts.pop(name)))
-            continue
-        if text.startswith('{"reason":"build-script-executed"'):
-            done += 1
-            continue
-        if text.startswith('{"reason":"build-finished"'):
-            try:
-                finished = json.loads(text).get("success")
-            except ValueError:
-                finished = None
-            continue
         if LOCK in text:
             locked = ev.t
         if DIAG.match(text):
