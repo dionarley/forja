@@ -1,5 +1,7 @@
 # Forja
 
+<p><img src="branding/logo/lockup.svg" alt="Forja — apps · serviço · pdm" height="72"></p>
+
 Plataforma de desenvolvimento de produto da **Tessera**: os apps de CAD, vetor,
 planilha e PDM em um só lugar, com os forks que a gente realmente modifica.
 
@@ -23,23 +25,33 @@ forja/
     forja-pdm/     serviço PDM: abre STEP do TeamCraft com o kernel
   services/
     teamcraft/     o PDM que roda na máquina (binário, não é fork)
-  tools/           subir/parar tudo, portas
+    forja-pdm.service  unit do systemd para o serviço
+  tools/           subir tudo e ver as portas
+  scripts/         sync.sh (submodules) e service.sh (start/stop do forja-pdm)
   docs/            STYLE.md (nomenclatura e estilo) e ARCH.md
-  branding/        identidade da plataforma
+  branding/        marca da plataforma: símbolo, wordmark, tokens
 ```
 
 ## Rodar
 
 ```sh
-scripts/sync.sh                     # inicializa/atualiza os submodules necessários
-cargo build                         # crates/forja-pdm
-tools/start-all.sh                  # sobe o que falta e mostra as portas
+scripts/sync.sh                     # materializa solidcore + open-pdm (path deps)
+cargo build -p forja-pdm            # serviço; primeiro build ~25 min
+scripts/service.sh start            # 127.0.0.1:8090
+tools/status.sh                     # as cinco portas, uma linha cada
 ```
 
 O build compila o kernel inteiro na primeira vez (~25 min, com `jobs = 1`).
-O limite vem de `.cargo/config.toml`: a máquina não tem swap e o `rustc` do
-kernel em `opt-level = 2` ocupa ~4 GB cada — dois em paralelo travam o sistema.
+O limite vem de `.cargo/config.toml`: a máquina não tem swap e um único `rustc`
+do kernel chega a ~6 GB — dois em paralelo estouram a RAM e travam o sistema.
 Depois disso, mudança em `crates/` recompila em segundos.
+
+Para o serviço voltar sozinho depois de um reboot:
+
+```sh
+cp services/forja-pdm.service ~/.config/systemd/user/
+systemctl --user daemon-reload && systemctl --user enable --now forja-pdm.service
+```
 
 Portas: `8080` TeamCraft · `8081` docs · `8088` GridCraft · `8089` visualizador
 DXF · `8090` forja-pdm.
@@ -66,6 +78,18 @@ cd ../.. && git add apps/solidcore && git commit -m "chore: atualiza solidcore"
 ```
 
 Cada fork tem um `FORJA-FORK.md` com o que muda e como rebasear do upstream.
+
+## Marcas
+
+| marca | onde | papel |
+|---|---|---|
+| **Tessera** | `dionarley/tessera` (privado) | assina contrato, laudo e proposta; dona das cores |
+| **Forja** | este repo | a bancada (apps + serviço + PDM) |
+| **Gabarito** | `dionarley/gabarito` | molde de produto, agnóstico |
+| **Brasa** | `diy_hot_gun` | primeiro produto (PS-001); marca própria |
+
+A Forja não usa a marca de nenhum produto: `branding/` tem o símbolo da
+plataforma (bloco com a boca do forno) e os tokens vêm da Tessera.
 
 ## Licenças
 
