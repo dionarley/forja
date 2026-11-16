@@ -10,8 +10,10 @@ Monorepo da plataforma. Leia `docs/STYLE.md` (nomenclatura e estilo) e
 - **Nunca abra PR nas origens.** Mudança em dependência: commit na branch `forja`
   do fork (`dionarley/<app>`) e bump do ponteiro do submodule aqui.
 - **`apps/_gpl/` não entra em template nem em produto distribuído** (GPL-3.0).
-- **Docs são fonte única.** Mudança de conteúdo/front matter em documento
-  controlado = revisão + ECO; não edite PDF em `dist/`.
+- **Cada coisa tem um dono.** Documentação e código vivem no git e mudam por
+  commit. Peça e montagem são item de PLM (`PS-001-LM-01`), com revisão e ECO;
+  documento não é item. PDF/site/DXF/STEP são derivados: nunca editados, nunca
+  versionados.
 - **Segredos**: `credentials.txt` do TeamCraft ou `~/.config/forja/`. Nunca no
   repo, nunca em unit do systemd, nunca em log.
 

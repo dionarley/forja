@@ -63,7 +63,8 @@ sem emoji, sem ponto final no resumo.
 | coisa | esquema |
 |---|---|
 | plataforma (este repo) | semver `0.x.y` |
-| produto | revisão **A, B, C…** + ECO; nunca tag semver |
+| peça e conjunto (item de PLM) | revisão **A, B, C…** + ECO; nunca tag semver |
+| documentação e código | git: commit; tag `vX.Y.Z` é a baseline do repo |
 | template (Gabarito) | semver |
 | marca | versão de tokens (`brand v1`) |
 
@@ -73,10 +74,19 @@ Submodule pinado por commit; `scripts/sync.sh` para atualizar; `Cargo.lock` e
 `uv.lock` commitados. Mudança em dependência: commit no fork → bump aqui.
 Nenhum PR nas origens.
 
-## 8. Documentação e ECO
+## 8. Documentação, código e o PLM
 
-`docs/` é fonte única. Mudar conteúdo ou front matter de documento controlado =
-revisão nova + ECO registrada no PDM, com o PDF liberado em `dist/`.
+**Documentação e código vivem no git e mudam por commit** — sem código de
+documento, sem revisão de letra, sem ECO. O histórico é `git log`; a tag
+`vX.Y.Z` é a baseline do repo.
+
+**O PLM guarda o produto físico: peça e montagem.** Item (`PS-001-LM-01`),
+revisão (`A`, `B`, `C`…), estado (`in_work` … `obsolete`) e ECO aprovada por
+outra pessoa. Item de PLM é o que se compra, se fabrica ou se monta; documento
+não é item.
+
+PDF, site, DXF, STEP e render são **derivados**: reconstruídos da fonte, nunca
+editados à mão e nunca versionados.
 
 ## 9. Segredos
 
