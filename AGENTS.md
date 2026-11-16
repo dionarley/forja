@@ -21,6 +21,11 @@ Monorepo da plataforma. Leia `docs/STYLE.md` (nomenclatura e estilo) e
 lockfile próprios: **não** entram no workspace do `forja-pdm` nem no
 `tools/build.sh`. Compile dentro do submodule, sob demanda.
 
+Toolchain: cada app pede a sua versão. Quem seleciona é o `mise` (já instalado;
+`rust` 1.99.1 aponta para `~/.cargo/bin`) — `mise exec rust@1.99.1 -- cargo …`.
+O `rustc` do sistema é 1.96.1 (NixOS) e não compila o `fieldcraft`, que pina
+1.99.1 no `rust-toolchain.toml`; `rustup` não existe nesta máquina.
+
 | app | sessão sem janela (agente) | prender à janela aberta |
 |---|---|---|
 | `pcbcraft` | `pcbcraft-cli mcp` | `pcbcraft-cli mcp --connect <porta> --token-file <arquivo>` |
