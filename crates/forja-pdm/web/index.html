@@ -164,10 +164,13 @@ async function openModel() {
     const response = await fetch("/api/mesh?" + new URLSearchParams({ ...p, format: "bin" }));
     if (!response.ok) throw new Error((await response.json()).error || `HTTP ${response.status}`);
     const buffer = await response.arrayBuffer();
+    // FJPM: magic(4) + versão(4) + nPos(4) + nIdx(4) + posições f32 + índices u32
     const header = new DataView(buffer, 0, 16);
     const magic = String.fromCharCode(...new Uint8Array(buffer, 0, 4));
     if (magic !== "FJPM") throw new Error("resposta não é uma malha FJPM");
-    const nPos = header.getUint32(4, true), nIdx = header.getUint32(8, true);
+    const version = header.getUint32(4, true);
+    if (version !== 1) throw new Error(`malha FJPM versão ${version} não suportada`);
+    const nPos = header.getUint32(8, true), nIdx = header.getUint32(12, true);
     const positions = new Float32Array(buffer, 16, nPos);
     const indices = new Uint32Array(buffer, 16 + nPos * 4, nIdx);
     showMesh(positions, indices);

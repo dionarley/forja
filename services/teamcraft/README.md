@@ -25,10 +25,23 @@ o banco derruba a API junto e o systemd levanta as duas.
 
 | chamada | para quê |
 |---|---|
-| `GET /api/items?project=PS-001` | lista de itens do projeto |
+| `GET /api/v1/items?project=PS-001` | lista de itens do projeto |
+| `GET /api/v1/items/<n>` | item + revisões |
+| `GET /api/v1/items/<n>/revisions/<rev>/files` | arquivos da revisão (nome, sha256, tamanho) |
+
+O download não passa pela API: o `forja-pdm` lê o objeto do vault pelo sha256
+(`~/teamcraft/data/vault/objects/<2>/<2>/<sha256>`), já que a API entrega o mesmo
+arquivo por `/api/v1/file-versions/<id>/content`.
+
+Rotas que o `forja-pdm` publica em `127.0.0.1:8090` (a UI é `/`):
+
+| chamada | para quê |
+|---|---|
+| `GET /api/items?project=PS-001` | itens do projeto (`/api/teamcraft/items` é apelido antigo) |
 | `GET /api/items/<n>` | item + revisões |
-| `GET /api/items/<n>/revisions/<rev>/files` | arquivos da revisão (nome, sha256, tamanho) |
-| `GET /api/objects/<sha256>` | bytes do arquivo no vault |
+| `GET /api/items/<n>/revisions/<rev>/files` | arquivos da revisão |
+| `GET /api/open`, `/api/mesh`, `/api/raw` | metadados, malha FJPM e bytes do arquivo |
+| `GET /healthz` | TeamCraft, token e vault |
 
 Autenticação por bearer token: `admin_token` no `~/teamcraft/credentials.txt`.
 O `forja-pdm` lê `FORJA_TEAMCRAFT_TOKEN`; sem ela, cai no `credentials.txt`.

@@ -51,15 +51,18 @@ fn handle(app: &App, request: tiny_http::Request) {
     let result: Result<(u16, &'static str, Vec<u8>)> = match segments.as_slice() {
         [] | ["index.html"] => Ok((200, "text/html; charset=utf-8", VIEWER.as_bytes().to_vec())),
         ["healthz"] => Ok((200, JSON, to_json(&health(app)))),
-        ["api", "teamcraft", "items"] => {
+        // `/api/items` é a rota pública (STYLE §1); `/api/teamcraft/items` fica
+        // como apelido para quem já chamava a versão antiga.
+        ["api", "items"] | ["api", "teamcraft", "items"] => {
             let project = query.get("project").map(String::as_str);
             app.client.items(project).map(|v| (200, JSON, to_json(&v)))
         }
-        ["api", "teamcraft", "items", number] => app
+        ["api", "items", number] | ["api", "teamcraft", "items", number] => app
             .client
             .item(number)
             .map(|v| (200, JSON, to_json(&v))),
-        ["api", "teamcraft", "items", number, "revisions", revision, "files"] => app
+        ["api", "items", number, "revisions", revision, "files"]
+        | ["api", "teamcraft", "items", number, "revisions", revision, "files"] => app
             .client
             .files(number, revision)
             .and_then(|files| Ok(serde_json::to_value(files)?))
