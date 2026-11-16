@@ -32,7 +32,7 @@ forja/
     forja-pdm.service  unit do systemd para o serviço
   tools/           subir tudo e ver as portas
   scripts/         sync.sh (submodules) e service.sh (start/stop do forja-pdm)
-  docs/            STYLE.md (nomenclatura e estilo) e ARCH.md
+  docs/            STYLE.md (nomenclatura e estilo), ARCH.md (camadas) e PLM.md (plano do PLM)
   branding/        marca da plataforma: símbolo, wordmark, tokens
 ```
 
