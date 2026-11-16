@@ -86,10 +86,11 @@ Nunca em repositório, nunca em unit do systemd, nunca em log.
 ## 10. Processos e portas
 
 Processos nossos: `forja-*` (`forja-pdm`, `forja-docs`). Apps de terceiro
-mantêm o nome (`teamcraft`, `gridcraft`, `solidcraft`).
+mantêm o nome (`teamcraft`, `gridcraft`, `solidcraft`, `pcbcraft`, `fieldcraft`).
 
 | porta | quem |
 |---|---|
+| 7070 | fieldcraft (`--control`; só enquanto o app está aberto) |
 | 8080 | TeamCraft |
 | 8081 | docs (Docusaurus) |
 | 8088 | GridCraft |
