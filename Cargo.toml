@@ -10,6 +10,8 @@ exclude = [
   "apps/vectorcraft",
   "apps/gridcraft",
   "apps/cad-viewer",
+  "apps/pcbcraft",
+  "apps/fieldcraft",
   "apps/open-pdm",
   "apps/_gpl/opencadstudio",
 ]

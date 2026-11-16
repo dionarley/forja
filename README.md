@@ -2,8 +2,10 @@
 
 <p><img src="branding/logo/lockup.svg" alt="Forja — apps · serviço · pdm" height="72"></p>
 
-Plataforma de desenvolvimento de produto da **Tessera**: os apps de CAD, vetor,
-planilha e PDM em um só lugar, com os forks que a gente realmente modifica.
+Plataforma de desenvolvimento de produto da **Tessera**: a bancada em que a
+pessoa e o agente desenham, verificam e registram o mesmo produto — CAD,
+eletrônica, CAE, vetor, planilha e PDM em um só lugar, com os forks que a gente
+realmente modifica.
 
 > A Forja é a bancada. O **Gabarito** é o molde de cada produto. O produto tem
 > marca própria (o **Brasa** é a primeira).
@@ -15,6 +17,8 @@ forja/
   apps/            forks (submodules) — cada um é um repo no GitHub
     solidcraft/    CAD paramétrico + kernel
     solidcore/     kernel B-rep: lê STEP, tessela, mede
+    pcbcraft/      eletrônica: esquema, placa e DRC, com MCP
+    fieldcraft/    CAE: malha, FEA, calor e CFD; abre o .solidcraft
     cadcraft/      CAD
     vectorcraft/   desenho vetorial
     gridcraft/     planilha
@@ -31,6 +35,26 @@ forja/
   docs/            STYLE.md (nomenclatura e estilo) e ARCH.md
   branding/        marca da plataforma: símbolo, wordmark, tokens
 ```
+
+## A cadeia do produto
+
+A plataforma existe para uma coisa: **a pessoa e o agente trabalhando no mesmo
+arquivo**, da ideia à verificação, sem exportar e reimportar no meio.
+
+| etapa | app | o que acontece ali |
+|---|---|---|
+| eletrônica | `pcbcraft` | esquema e placa; o agente edita pela sessão de MCP do editor aberto |
+| peça 3D | `solidcraft` | paramétrico com timeline; o `.sc` é a fonte da verdade |
+| verificação | `fieldcraft` | abre o `.solidcraft`, malha em hex/tet e resolve FEA, calor ou CFD |
+| desenho | `cadcraft` · `vectorcraft` | desenho técnico e prancha |
+| custos e BOM | `gridcraft` | planilha do produto |
+| registro | `forja-pdm` + TeamCraft | revisão, ECO, STEP do vault e malha para o visualizador |
+
+`pcbcraft`, `fieldcraft`, `solidcraft` e `gridcraft` falam MCP: o agente chama
+os mesmos comandos da interface, no mesmo histórico de desfazer. Os dois novos
+prendem a sessão à janela aberta quando você quiser acompanhar —
+`fieldcraft --control 7070` com `fieldcraft-cli mcp --connect 127.0.0.1:7070`, e
+`pcbcraft-cli mcp --connect <porta> --token-file <arquivo>`.
 
 ## Rodar
 
@@ -118,8 +142,8 @@ plataforma (bloco com a boca do forno) e os tokens vêm da Tessera.
 
 Os apps do caminho principal são Apache-2.0 (solidcraft, solidcore, cadcraft,
 vectorcraft, gridcraft), MIT (cad-viewer) e MIT OR Apache-2.0 (open-pdm — o
-fork ganhou `LICENSE-*`, que faltavam no upstream). O nosso código é
-MIT OR Apache-2.0.
+fork ganhou `LICENSE-*`, que faltavam no upstream; pcbcraft e fieldcraft já
+trazem `LICENSE-APACHE` e `LICENSE-MIT`). O nosso código é MIT OR Apache-2.0.
 
 **OpenCADStudio é GPL-3.0** e por isso vive em `apps/_gpl/`: pode ser usado como
 ferramenta, não entra no `Gabarito` nem em produto distribuído.

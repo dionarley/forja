@@ -15,6 +15,20 @@ Monorepo da plataforma. Leia `docs/STYLE.md` (nomenclatura e estilo) e
 - **Segredos**: `credentials.txt` do TeamCraft ou `~/.config/forja/`. Nunca no
   repo, nunca em unit do systemd, nunca em log.
 
+## Apps de bancada
+
+`solidcraft`, `pcbcraft`, `fieldcraft` e `gridcraft` são apps com workspace e
+lockfile próprios: **não** entram no workspace do `forja-pdm` nem no
+`tools/build.sh`. Compile dentro do submodule, sob demanda.
+
+| app | sessão sem janela (agente) | prender à janela aberta |
+|---|---|---|
+| `pcbcraft` | `pcbcraft-cli mcp` | `pcbcraft-cli mcp --connect <porta> --token-file <arquivo>` |
+| `fieldcraft` | `fieldcraft-cli mcp` | `fieldcraft --control 7070 &` + `fieldcraft-cli mcp --connect 127.0.0.1:7070` |
+
+O `fieldcraft` abre um `.solidcraft` direto e reconstrói os corpos pela linha do
+tempo: é assim que a peça paramétrica entra na análise, sem STEP no meio.
+
 ## Comandos
 
 ```sh

@@ -55,6 +55,22 @@ TeamCraft ──API──▶ vault/objects/<sha>  ──bytes──▶ HandlerRe
 - Não substitui o TeamCraft: não cria item, não libera revisão.
 - Não é editor: abre, mostra e entrega a malha.
 
+## Onde os apps entram
+
+O `forja-pdm` é só o registro: abre o STEP da revisão, tessela e entrega malha.
+Quem **cria** e quem **verifica** são os apps, cada um com a própria sessão:
+
+- `pcbcraft` (eletrônica) e `fieldcraft` (CAE) são workspaces Rust próprios,
+  pinados como submodule e compilados sob demanda — `edition 2024`, rust 1.95,
+  fora do workspace deste repo. Falam MCP; a sessão headless e a janela aberta
+  rodam os mesmos comandos.
+- O `fieldcraft` abre um `.solidcraft` e reconstrói os corpos pela timeline, então
+  a peça paramétrica entra na análise sem exportar STEP. O STEP só existe para o
+  PDM, para o visualizador e para quem recebe o arquivo.
+- Nada de resultado de análise volta para o `forja-pdm`: volume e faixa vêm da
+  malha do STEP; massa, tensão e temperatura são laudo do app, guardado na
+  revisão do item no TeamCraft.
+
 ## Escolhas
 
 | escolha | por quê |

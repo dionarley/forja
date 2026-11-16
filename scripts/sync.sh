@@ -2,7 +2,7 @@
 # Materializa os submodules que o serviço precisa e, sob demanda, os demais.
 #
 #   scripts/sync.sh            # solidcore + open-pdm (path deps do forja-pdm)
-#   scripts/sync.sh --all      # todos os 8 forks
+#   scripts/sync.sh --all      # todos os 10 forks
 #   scripts/sync.sh --status   # só mostra o que está pinado e o que existe
 #
 # O clone é raso e na branch `forja`. O solidcore perde os goldens
@@ -14,7 +14,8 @@ cd "$(dirname "$0")/.."
 
 NEEDED=(apps/solidcore apps/open-pdm)
 OPTIONAL=(apps/solidcraft apps/cadcraft apps/vectorcraft apps/gridcraft
-          apps/cad-viewer apps/_gpl/opencadstudio)
+          apps/cad-viewer apps/_gpl/opencadstudio
+          apps/pcbcraft apps/fieldcraft)
 
 materialize() {
   local path=$1

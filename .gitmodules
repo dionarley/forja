@@ -38,3 +38,13 @@
 	url = https://github.com/dionarley/OpenCADStudio.git
 	branch = forja
 	shallow = true
+[submodule "apps/pcbcraft"]
+	path = apps/pcbcraft
+	url = https://github.com/dionarley/pcbcraft.git
+	branch = forja
+	shallow = true
+[submodule "apps/fieldcraft"]
+	path = apps/fieldcraft
+	url = https://github.com/dionarley/fieldcraft.git
+	branch = forja
+	shallow = true
