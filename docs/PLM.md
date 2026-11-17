@@ -29,8 +29,8 @@ volta para dentro do PDM.
 | 1 | BOM multifuncional | **parcial** | TeamCraft tem BOM multinível (`get_bom`); o modelo já exporta BOM do conjunto (22 posições / 14 peças); o `forja-pdm` não publica BOM |
 | 2 | Planejamento conectado ao CAD | **não existe** | — (adaptação: painel de pendências) |
 | 3 | Matérias-primas | **parcial** | material e massa já existem no modelo (1.721 g); catálogo e massa calculada ainda não |
-| 4 | Modelo digital 3D | **parcial** | 14 peças nativas + montagem de 22 posições no `.sc`; o visualizador ainda abre um arquivo só |
-| 5 | Alterações formais | **parcial** | ECR/ECO e prontidão completos no TeamCraft; nada disso aparece no `forja-pdm` |
+| 4 | Modelo digital 3D | **parcial** | 14 peças nativas + montagem de 22 posições; o `forja-pdm` já mostra a árvore do `.sc`, a miniatura nativa e a montagem peça por peça |
+| 5 | Alterações formais | **parcial** | ECR/ECO e prontidão completos no TeamCraft; a ECO do modelo nativo (CHG-000010) foi submetida e aprovada, mas nada disso aparece no `forja-pdm` |
 | 6 | Código-fonte no PLM | **fora de escopo** | código e documento são git; a revisão guarda no máximo o ponteiro |
 | 7 | Classificação IP | **parcial** | `classification` da revisão existe; sem taxonomia nem busca por classe |
 | 8 | Rede de fornecedores | **parcial** | só `unit_cost`; fornecedor e prazo não existem |
@@ -70,6 +70,13 @@ serviço.
 - trabalho em lote (criar posições, extrair peças, exportar STEP) roda no
   `solidcraft-cli`, **não na janela**: a interface congela ao carregar um conjunto
   grande, e o lote não precisa de tela.
+
+**Já feito (16/11):** o `forja-pdm` lê o `.sc` nativo — `GET /api/tree` devolve a
+árvore da montagem (14 definições, 22 posições) com material e massa vindos da
+revisão, `GET /api/thumb` devolve a miniatura que o SolidCraft grava dentro da
+peça, e `GET /api/assembly` monta a cena a partir das peças do próprio `.sc`. O
+TeamCraft já tem as 14 peças em rev. B e a montagem em rev. C, com `.sc`, STEP e
+massa, liberadas pela ECO CHG-000010.
 
 **Aceite:** uma peça sai do PDM, é editada no app e volta como revisão nova com
 arquivo, STEP, massa e BOM, sem comando manual no meio.

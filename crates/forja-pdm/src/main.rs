@@ -13,6 +13,7 @@
 
 mod handlers;
 mod kernel;
+mod native;
 mod open;
 mod server;
 mod teamcraft;

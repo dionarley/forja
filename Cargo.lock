@@ -229,6 +229,7 @@ dependencies = [
  "solidcore-tess",
  "tiny_http",
  "ureq",
+ "zip",
 ]
 
 [[package]]

@@ -8,6 +8,7 @@ use anyhow::{anyhow, Result};
 use serde_json::{json, Value};
 
 use crate::kernel::KernelMesh;
+use crate::native::Design;
 use crate::open::{self, Cache, Opened};
 use crate::teamcraft::{self, Client};
 
@@ -31,7 +32,15 @@ pub fn serve(app: Arc<App>, addr: &str) -> Result<()> {
     let server = tiny_http::Server::http(addr)
         .map_err(|e| anyhow!("não consegui escutar em {addr}: {e}"))?;
     eprintln!("forja-pdm ouvindo em http://{addr}");
-    eprintln!("  TeamCraft: {} (token: {})", app.client.base(), if app.client.has_token() { "sim" } else { "não" });
+    eprintln!(
+        "  TeamCraft: {} (token: {})",
+        app.client.base(),
+        if app.client.has_token() {
+            "sim"
+        } else {
+            "não"
+        }
+    );
     eprintln!("  vault:     {}", app.client.vault().display());
     for request in server.incoming_requests() {
         let app = Arc::clone(&app);
@@ -44,10 +53,19 @@ fn handle(app: &App, request: tiny_http::Request) {
     let (path, query) = split_url(request.url());
     let method = request.method().as_str().to_string();
     if method != "GET" && method != "HEAD" {
-        return send(request, 405, "text/plain; charset=utf-8", b"somente GET\n".to_vec());
+        return send(
+            request,
+            405,
+            "text/plain; charset=utf-8",
+            b"somente GET\n".to_vec(),
+        );
     }
 
-    let segments: Vec<&str> = path.trim_matches('/').split('/').filter(|s| !s.is_empty()).collect();
+    let segments: Vec<&str> = path
+        .trim_matches('/')
+        .split('/')
+        .filter(|s| !s.is_empty())
+        .collect();
     let result: Result<(u16, &'static str, Vec<u8>)> = match segments.as_slice() {
         [] | ["index.html"] => Ok((200, "text/html; charset=utf-8", VIEWER.as_bytes().to_vec())),
         ["healthz"] => Ok((200, JSON, to_json(&health(app)))),
@@ -57,10 +75,9 @@ fn handle(app: &App, request: tiny_http::Request) {
             let project = query.get("project").map(String::as_str);
             app.client.items(project).map(|v| (200, JSON, to_json(&v)))
         }
-        ["api", "items", number] | ["api", "teamcraft", "items", number] => app
-            .client
-            .item(number)
-            .map(|v| (200, JSON, to_json(&v))),
+        ["api", "items", number] | ["api", "teamcraft", "items", number] => {
+            app.client.item(number).map(|v| (200, JSON, to_json(&v)))
+        }
         ["api", "items", number, "revisions", revision, "files"]
         | ["api", "teamcraft", "items", number, "revisions", revision, "files"] => app
             .client
@@ -68,31 +85,32 @@ fn handle(app: &App, request: tiny_http::Request) {
             .and_then(|files| Ok(serde_json::to_value(files)?))
             .map(|v| (200, JSON, to_json(&v))),
         ["api", "open"] => load(app, &query).and_then(|opened| {
-            let (metadata, handler) = opened.metadata()?;
+            let (handler, metadata) = describe(&opened)?;
             Ok((
                 200,
                 JSON,
                 to_json(&json!({
                     "file": opened.summary(),
                     "handler": handler,
-                    "metadata": {
-                        "format": metadata.format,
-                        "attributes": metadata.attributes,
-                    },
+                    "metadata": metadata,
                 })),
             ))
         }),
+        // A montagem nativa: estrutura do `.sc`, com material e massa do PDM.
+        ["api", "tree"] => tree(app, &query),
+        // A miniatura que o SolidCraft já gravou dentro do `.sc` da peça.
+        ["api", "thumb"] => thumbnail(app, &query),
+        // A montagem inteira: cada peça nas suas posições, direto do `.sc`.
+        ["api", "assembly"] => assembly(app, &query),
         ["api", "mesh"] => mesh(app, &query),
-        ["api", "raw"] => load(app, &query).and_then(|opened| {
+        ["api", "raw"] => load(app, &query).map(|opened| {
             let content_type = opened
                 .metadata()
                 .map(|(m, _)| content_type_for(&m.format))
                 .unwrap_or("application/octet-stream");
-            Ok((200, content_type, opened.bytes))
+            (200, content_type, opened.bytes)
         }),
-        _ => Err(anyhow!(
-            "rota desconhecida: {path} (veja / ou /healthz)"
-        )),
+        _ => Err(anyhow!("rota desconhecida: {path} (veja / ou /healthz)")),
     };
 
     match result {
@@ -106,6 +124,12 @@ fn handle(app: &App, request: tiny_http::Request) {
 
 fn mesh(app: &App, query: &BTreeMap<String, String>) -> Result<(u16, &'static str, Vec<u8>)> {
     let opened = load(app, query)?;
+    if is_native(&opened.name) {
+        return Err(anyhow!(
+            "{} é o desenho nativo, não malha: peça o STEP da revisão (file=<item>.step)",
+            opened.name
+        ));
+    }
     let (metadata, handler) = opened.metadata()?;
     let mut cache = app
         .cache
@@ -135,17 +159,228 @@ fn mesh(app: &App, query: &BTreeMap<String, String>) -> Result<(u16, &'static st
     ))
 }
 
+/// Metadados de um arquivo aberto; o `.sc` é lido pelo leitor nativo, o resto
+/// vai ao registro de handlers do OpenPDM.
+fn describe(opened: &Opened) -> Result<(String, Value)> {
+    if is_native(&opened.name) {
+        let design = Design::open(&opened.bytes)?;
+        return Ok((
+            "solidcraft-design (nativo)".to_string(),
+            json!({ "format": "solidcraft", "attributes": {}, "structure": design.summary() }),
+        ));
+    }
+    let (metadata, handler) = opened.metadata()?;
+    Ok((
+        handler.to_string(),
+        json!({ "format": metadata.format, "attributes": metadata.attributes }),
+    ))
+}
+
+fn is_native(name: &str) -> bool {
+    name.to_ascii_lowercase().ends_with(".sc")
+}
+
+/// `GET /api/tree` — a árvore da montagem a partir do `.sc` nativo.
+///
+/// Cada definição aparece uma vez, com a quantidade de ocorrências: as quatro
+/// cantoneiras são uma peça em quatro posições, não quatro peças.
+fn tree(app: &App, query: &BTreeMap<String, String>) -> Result<(u16, &'static str, Vec<u8>)> {
+    let opened = load_design(app, query)?;
+    let design = Design::open(&opened.bytes)?;
+    let mut tree = design.tree();
+    if opened.source == "teamcraft" {
+        join_pdm(app, &mut tree);
+    }
+    Ok((
+        200,
+        JSON,
+        to_json(&json!({ "file": opened.summary(), "tree": tree })),
+    ))
+}
+
+/// `GET /api/thumb?code=PS-001-LM-06` — a miniatura do `.sc` da peça.
+fn thumbnail(app: &App, query: &BTreeMap<String, String>) -> Result<(u16, &'static str, Vec<u8>)> {
+    let code = required(query, "code")?;
+    let revision = match query.get("rev").filter(|r| !r.is_empty()) {
+        Some(rev) => rev.clone(),
+        None => latest_revision(&app.client, &code)?,
+    };
+    let files = app.client.files(&code, &revision)?;
+    let wanted = query
+        .get("file")
+        .filter(|f| !f.is_empty())
+        .cloned()
+        .unwrap_or_else(|| format!("{code}.sc"));
+    let found = files
+        .iter()
+        .find(|f| f.filename.eq_ignore_ascii_case(&wanted))
+        .or_else(|| {
+            files
+                .iter()
+                .find(|f| f.filename.to_ascii_lowercase().ends_with(".sc"))
+        })
+        .ok_or_else(|| anyhow!("{code}@{revision} não tem .sc para miniatura"))?
+        .clone();
+    let bytes = app.client.object(&found.sha256)?;
+    let png = Design::entry(&bytes, "cache/thumbnail.png")?;
+    Ok((200, "image/png", png))
+}
+
+/// Abre o `.sc` da revisão (o primeiro, se `file` não for dito).
+fn load_design(app: &App, query: &BTreeMap<String, String>) -> Result<Opened> {
+    if query.get("file").filter(|f| !f.is_empty()).is_some() {
+        return load(app, query);
+    }
+    let source = query
+        .get("source")
+        .map(|s| s.to_ascii_lowercase())
+        .unwrap_or_else(|| "teamcraft".to_string());
+    if source != "teamcraft" && source != "tc" {
+        return Err(anyhow!("fonte {source} precisa do parâmetro 'path'"));
+    }
+    let code = required(query, "code")?;
+    let revision = match query.get("rev").filter(|r| !r.is_empty()) {
+        Some(rev) => rev.clone(),
+        None => latest_revision(&app.client, &code)?,
+    };
+    let files = app.client.files(&code, &revision)?;
+    let found = files
+        .iter()
+        .find(|f| is_native(&f.filename))
+        .ok_or_else(|| {
+            anyhow!(
+                "{code}@{revision} não tem .sc (tem: {})",
+                files
+                    .iter()
+                    .map(|f| f.path())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )
+        })?;
+    let mut query = query.clone();
+    query.insert("file".to_string(), found.filename.clone());
+    query.insert("rev".to_string(), revision);
+    load(app, &query)
+}
+
+/// Junta ao `.sc` o que só o PDM sabe: material, massa e estado da revisão.
+fn join_pdm(app: &App, tree: &mut Value) {
+    let Some(parts) = tree.get_mut("parts").and_then(Value::as_array_mut) else {
+        return;
+    };
+    for part in parts.iter_mut() {
+        let number = part
+            .get("part_number")
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_string();
+        if number.is_empty() {
+            continue;
+        }
+        let Ok(detail) = app.client.item(&number) else {
+            continue;
+        };
+        let Some(revision) = detail
+            .get("revisions")
+            .and_then(Value::as_array)
+            .and_then(|revisions| revisions.first())
+        else {
+            continue;
+        };
+        part["pdm"] = json!({
+            "number": number,
+            "name": revision.get("name"),
+            "revision": revision.get("code"),
+            "state": revision.get("state"),
+            "material": revision.get("material"),
+            "mass_kg": revision.get("mass_kg"),
+            "description": revision.get("description"),
+        });
+    }
+}
+
+/// `GET /api/assembly` — a montagem inteira, peça por peça, nas suas posições.
+///
+/// O STEP exportado do conjunto traz uma cópia por *definição*; aqui cada
+/// definição é tessellada uma vez (e fica no cache) e repetida nas ocorrências
+/// que o `.sc` registra — as 4 cantoneiras aparecem nas 4 posições.
+fn assembly(app: &App, query: &BTreeMap<String, String>) -> Result<(u16, &'static str, Vec<u8>)> {
+    let opened = load_design(app, query)?;
+    let design = Design::open(&opened.bytes)?;
+    let pieces = design.pieces();
+    if pieces.is_empty() {
+        return Err(anyhow!(
+            "{} não é montagem: não tem peça importada",
+            opened.name
+        ));
+    }
+
+    let mut positions: Vec<f32> = Vec::new();
+    let mut indices: Vec<u32> = Vec::new();
+    let mut report = Vec::with_capacity(pieces.len());
+    {
+        let mut cache = app
+            .cache
+            .lock()
+            .map_err(|_| anyhow!("cache envenenado por um erro anterior"))?;
+        for piece in &pieces {
+            let blob = Design::entry(&opened.bytes, &piece.blob)?;
+            let key = format!("{}:{}", opened.key, piece.blob);
+            let (mesh, cached) = cache.get(&key, &blob)?;
+            for position in &piece.positions {
+                let base = (positions.len() / 3) as u32;
+                for point in mesh.mesh.positions.chunks(3) {
+                    positions.push(point[0] + position[0] as f32);
+                    positions.push(point[1] + position[1] as f32);
+                    positions.push(point[2] + position[2] as f32);
+                }
+                for index in &mesh.mesh.indices {
+                    indices.push(base + *index);
+                }
+            }
+            report.push(json!({
+                "part_number": piece.part_number,
+                "name": piece.name,
+                "occurrences": piece.positions.len(),
+                "triangles": mesh.mesh.indices.len() / 3,
+                "cached": cached,
+            }));
+        }
+    }
+
+    if query.get("format").map(String::as_str) == Some("bin") {
+        return Ok((
+            200,
+            "application/octet-stream",
+            binary_positions(&positions, &indices),
+        ));
+    }
+    Ok((
+        200,
+        JSON,
+        to_json(&json!({
+            "file": opened.summary(),
+            "parts": report,
+            "mesh": { "positions": positions, "indices": indices },
+        })),
+    ))
+}
+
 /// `FJPM` + versão + contagens + posições f32 + índices u32 (little-endian).
 fn binary_mesh(mesh: &KernelMesh) -> Vec<u8> {
-    let mut out = Vec::with_capacity(16 + mesh.mesh.positions.len() * 4 + mesh.mesh.indices.len() * 4);
+    binary_positions(&mesh.mesh.positions, &mesh.mesh.indices)
+}
+
+fn binary_positions(positions: &[f32], indices: &[u32]) -> Vec<u8> {
+    let mut out = Vec::with_capacity(16 + positions.len() * 4 + indices.len() * 4);
     out.extend_from_slice(b"FJPM");
     out.extend_from_slice(&1u32.to_le_bytes());
-    out.extend_from_slice(&(mesh.mesh.positions.len() as u32).to_le_bytes());
-    out.extend_from_slice(&(mesh.mesh.indices.len() as u32).to_le_bytes());
-    for value in &mesh.mesh.positions {
+    out.extend_from_slice(&(positions.len() as u32).to_le_bytes());
+    out.extend_from_slice(&(indices.len() as u32).to_le_bytes());
+    for value in positions {
         out.extend_from_slice(&value.to_le_bytes());
     }
-    for value in &mesh.mesh.indices {
+    for value in indices {
         out.extend_from_slice(&value.to_le_bytes());
     }
     out
@@ -178,7 +413,9 @@ fn load(app: &App, query: &BTreeMap<String, String>) -> Result<Opened> {
             let path = required(query, "path")?;
             open::from_git(&repo, query.get("rev").map(String::as_str), &path)
         }
-        other => Err(anyhow!("fonte desconhecida: {other} (use teamcraft ou git)")),
+        other => Err(anyhow!(
+            "fonte desconhecida: {other} (use teamcraft ou git)"
+        )),
     }
 }
 
