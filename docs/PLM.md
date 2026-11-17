@@ -1,84 +1,91 @@
-# PLM — o que a Forja copia do SOLIDWORKS PLM
+# PLM — o que a Forja aprende com o SOLIDWORKS PLM
 
 Referência: página **SOLIDWORKS PLM** (solidworks.com/pt-br/product/solidworks-plm),
-lida em 15/11/2026. Ela vende dez recursos, em três pacotes (Standard, Professional,
-Premium), sobre a plataforma 3DEXPERIENCE na nuvem.
+lida em 15/11/2026. Ela vende dez recursos, em três pacotes, sobre a plataforma
+3DEXPERIENCE na nuvem.
 
-A Forja não clona o produto: ela tem outro chão — **TeamCraft roda na máquina e é
-dono dos dados**, o `forja-pdm` é a janela e a camada de derivados. O que se copia
-é o **problema do usuário**, não a tela. Cada recurso passa por três perguntas:
+A página é **referência limpa, não paridade**: serve de catálogo do problema que um
+PLM resolve. A Forja não persegue os mesmos recursos nem o mesmo modelo de entrega —
+o produto é **app local + serviço no servidor on-premise**, e o caminho é a
+**integração com o SolidCraft**: a peça nasce e é editada no app, o serviço guarda,
+versiona e mostra. Nada de nuvem multi-tenant.
 
-1. O dado já existe no TeamCraft (item, revisão, BOM, arquivo, atributo)?
-2. A fronteira do produto permite (STYLE §8: PLM = peça e montagem; documento e
-   código = git)?
-3. Paga o esforço para 1–5 produtos, ou é recurso de empresa grande?
+## 1. PDM, PLM, ERP/MES — quem faz o quê
 
-## 1. Os dez recursos da página
-
-| # | recurso | o que resolve |
+| camada | o que organiza | na Forja |
 |---|---|---|
-| 1 | BOM multifuncional | uma definição de produto compartilhada entre disciplinas |
-| 2 | Planejamento de projeto conectado ao CAD | tarefas, marcos e dependências ligados ao dado de projeto |
-| 3 | Gerenciamento de matérias-primas | matéria-prima e quantidade na BOM |
-| 4 | Modelo de produto digital 3D | ver e explorar CAD multi-CAD, inclusive sem CAD |
-| 5 | Gerenciamento formal de alterações | ECO em ciclo fechado, com decisão e tarefa para cada área |
-| 6 | Integração do código-fonte | código do produto dentro da estrutura/BOM |
-| 7 | Classificação IP de bibliotecas | classificar, achar e reutilizar peça |
-| 8 | Rede de fornecedores | contato, endereço, rastreabilidade do fornecedor |
-| 9 | Itens do fabricante (MBOM) | BOM de fabricação a partir do projeto 3D |
-| 10 | Variantes do produto | configurações mestras por regra |
+| **PDM** | dado técnico de projeto: peça, revisão, arquivo, BOM de engenharia, check-out | TeamCraft é o PDM; o `forja-pdm` é a janela e a camada de derivados |
+| **PLM** | ciclo de vida e colaboração: ECO/ECR, prontidão de liberação, fornecedor, variante, portfólio | TeamCraft cobre hoje ECO/ECR, revisão e prontidão; o resto é fase futura |
+| **ERP / MES** | execução: compra, estoque, roteiro, custo real, chão de fábrica | **fora de escopo**; no máximo a BOM sai daqui para alimentar um ERP |
 
-## 2. Onde a Forja está (verificado em 15/11/2026)
+A fronteira que vale: o PLM guarda **peça e montagem**; documento e código vivem no
+git (STYLE §8). O que o ERP precisa é derivado — BOM, quantidade, massa — e não
+volta para dentro do PDM.
 
-| # | estado | onde está hoje |
-|---|---|---|
-| 1 | **parcial** | TeamCraft tem BOM multinível (`get_bom`) e `bom_health`; o `forja-pdm` não publica BOM nenhuma |
-| 2 | **não existe** | — |
-| 3 | **parcial** | a revisão já tem `material` e `mass_kg`; não há catálogo de material nem massa calculada da geometria |
-| 4 | **parcial** | visualizador STEP/FJPM de **um arquivo**; o conjunto com 22 posições só existe no `.sc` |
-| 5 | **parcial** | ECR/ECO, revisão, prontidão de liberação e `impact_summary` completos no TeamCraft; nada disso aparece no `forja-pdm` |
-| 6 | **fora de escopo** | decidido: código e documento no git, PLM só guarda o ponteiro (STYLE §8) |
-| 7 | **parcial** | `classification` da revisão (`purchased`…) existe, mas sem taxonomia nem busca por classe |
-| 8 | **parcial** | só `unit_cost`; fornecedor, prazo e contato não existem |
-| 9 | **não existe** | — |
-| 10 | **não existe** | — |
+## 2. Onde a Forja está (verificado em 16/11/2026)
 
-O gargalo hoje não é o TeamCraft: é o **modelo** (peça isolada, material, STEP por
-peça) e a **janela** (`forja-pdm` só abre um arquivo e só faz GET).
+| # | recurso da página | estado | onde está hoje |
+|---|---|---|---|
+| 1 | BOM multifuncional | **parcial** | TeamCraft tem BOM multinível (`get_bom`); o modelo já exporta BOM do conjunto (22 posições / 14 peças); o `forja-pdm` não publica BOM |
+| 2 | Planejamento conectado ao CAD | **não existe** | — (adaptação: painel de pendências) |
+| 3 | Matérias-primas | **parcial** | material e massa já existem no modelo (1.721 g); catálogo e massa calculada ainda não |
+| 4 | Modelo digital 3D | **parcial** | 14 peças nativas + montagem de 22 posições no `.sc`; o visualizador ainda abre um arquivo só |
+| 5 | Alterações formais | **parcial** | ECR/ECO e prontidão completos no TeamCraft; nada disso aparece no `forja-pdm` |
+| 6 | Código-fonte no PLM | **fora de escopo** | código e documento são git; a revisão guarda no máximo o ponteiro |
+| 7 | Classificação IP | **parcial** | `classification` da revisão existe; sem taxonomia nem busca por classe |
+| 8 | Rede de fornecedores | **parcial** | só `unit_cost`; fornecedor e prazo não existem |
+| 9 | Itens do fabricante (MBOM) | **não existe** | — |
+| 10 | Variantes | **não existe** | — |
 
 ## 3. Fases
 
-Regra: cada fase entrega algo usável sozinha, e nada depois da fase 0 faz sentido
-sem ela. Tamanho: **P** ≤ 1 sessão, **M** 2–3, **G** mais que isso.
+Cada fase entrega algo usável sozinha. Tamanho: **P** ≤ 1 sessão, **M** 2–3,
+**G** mais que isso.
 
-### Fase 0 — o modelo vira dado (repo do produto)
+### Fase 0 — o modelo vira dado · feito
 
-Pré-requisito de todas as outras. Sem peça nativa, material e STEP por peça, o PLM
-não tem o que guardar.
+- 14 definições nativas (`PS-001-LM-01…14`) em `cad/solidcraft/parts/`.
+- `PS-001.sc` virou montagem: **14 links, 22 posições** (as 8 repetidas por
+  ocorrência, não por cópia de história).
+- material por corpo, densidade e massa por peça; massa total **1.721 g**.
+- STEP por peça e STEP do conjunto (assembly).
 
-- 14 definições nativas (`PS-001-LM-01…14`) em `cad/solidcraft/parts/`; o conjunto
-  mantém 22 posições por link (`component.extract` + `replace_with_link`).
-- material por corpo, com densidade; massa por peça.
-- STEP por peça e STEP do conjunto.
-- BOM do conjunto (part number, descrição, quantidade) igual ao `BOM.csv`.
+**Aceite:** volume do conjunto igual ao flat (448.434 mm³, diferença < 0,001%),
+BOM do app idêntica ao `docs/construcao/BOM.csv` (1, 1, 1, 1, 1, 4, 4, 2, 2, 1, 1,
+1, 1, 1 = 22 posições), e cada peça com `.sc` + STEP + material + massa.
 
-**Pronto quando:** volume do conjunto idêntico ao de antes (448.433,77 mm³), BOM do
-app bate com o `BOM.csv`, e cada peça tem `.sc` + STEP + material + massa.
+### Fase 1 — SolidCraft ↔ PDM · M
 
-### Fase 1 — matéria-prima e massa (#3, metade de #1) · P–M
+É a fase que dá sentido às outras: o app deixa de ser um fim e passa a falar com o
+serviço.
+
+- **abrir do PDM**: escolher item/revisão no `forja-pdm` e abrir a peça no
+  SolidCraft (arquivo do vault, não cópia solta).
+- **check-out / check-in**: a revisão em `in_work` fica travada para o editor; ao
+  salvar, o app devolve `.sc` + STEP e o serviço deriva volume, material e massa.
+- **BOM da montagem**: o BOM que o SolidCraft já exporta (`assembly.bom`) vira a
+  BOM da revisão do conjunto, com `part_number` e quantidade — sem digitação.
+- **material e massa**: o que o app calcula preenche `material` e `mass_kg` da
+  revisão; divergência com o valor declarado vira aviso.
+- trabalho em lote (criar posições, extrair peças, exportar STEP) roda no
+  `solidcraft-cli`, **não na janela**: a interface congela ao carregar um conjunto
+  grande, e o lote não precisa de tela.
+
+**Aceite:** uma peça sai do PDM, é editada no app e volta como revisão nova com
+arquivo, STEP, massa e BOM, sem comando manual no meio.
+
+### Fase 2 — matéria-prima e massa · P–M
 
 - catálogo de materiais: densidade, custo/kg, classe (metal, polímero, madeira…).
-  Base embutida no serviço (a mesma biblioteca do app) + `materials.toml` do produto
-  para overrides.
-- massa calculada = volume da malha × densidade, **ao lado** da massa declarada na
-  revisão; divergência acima de 2% vira aviso.
+  Base embutida no serviço + `materials.toml` do produto para overrides.
+- massa calculada = volume da malha × densidade, **ao lado** da massa declarada;
+  divergência acima de 2% vira aviso.
 - `mass_kg` de cada peça preenchido na revisão nova (hoje é `null`).
-- na UI: material e massa na ficha da peça e no nó da BOM.
 
-**Pronto quando:** `PS-001` fecha a soma das peças e o conjunto declara a massa
-total; nenhuma peça sem `material` ou `mass_kg`.
+**Aceite:** `PS-001` fecha a soma das peças e o conjunto declara a massa total;
+nenhuma peça sem `material` ou `mass_kg`.
 
-### Fase 2 — BOM e alterações (#1, #5) · M
+### Fase 3 — BOM e alterações · M
 
 - árvore de BOM da revisão, multinível, com massa acumulada e quantidade.
 - painel de ECO/ECR: estado, revisões incluídas, prontidão (filho não liberado,
@@ -87,10 +94,10 @@ total; nenhuma peça sem `material` ou `mass_kg`.
 - diff entre revisões: BOM, arquivos, atributos, material.
 - clique na linha da BOM abre a peça no visualizador.
 
-**Pronto quando:** dá para responder, sem abrir o TeamCraft, "o que muda na rev. C
-do PS-001, quem é afetado e o que trava a liberação".
+**Aceite:** responder sem abrir o TeamCraft "o que muda na rev. C do PS-001, quem é
+afetado e o que trava a liberação".
 
-### Fase 3 — biblioteca, classificação e fornecedor (#7, #8) · M
+### Fase 4 — biblioteca, classificação e fornecedor · M
 
 - taxonomia curta de classificação (mecânica, elétrica, comprado, fabricado,
   consumível), aplicada à revisão.
@@ -98,23 +105,22 @@ do PS-001, quem é afetado e o que trava a liberação".
   (`find_duplicate_files`).
 - fornecedor como atributo da revisão (`supplier`, `lead_time_days`) enquanto o
   TeamCraft não tiver tabela; custo já existe (`unit_cost`).
-- BOM mostra coluna "comprado/fabricado" e prazo.
+- BOM mostra "comprado/fabricado" e prazo.
 
-**Pronto quando:** uma peça nova é classificada e encontrada por classe, e a BOM
-diz o que é comprado, de quem e em quanto tempo.
+**Aceite:** peça nova classificada e encontrada por classe; BOM diz o que é
+comprado, de quem e em quanto tempo.
 
-### Fase 4 — variantes e MBOM (#10, #9) · G
+### Fase 5 — variantes e MBOM · G
 
 - variante como atributo de revisão + linha de BOM condicional (ex.: 127 V / 220 V).
-  Decidir antes: **item separado por variante** ou **atributo na mesma revisão** —
-  a primeira é mais simples no TeamCraft, a segunda evita duplicar BOM.
+  Decidir antes: **item separado por variante** ou **atributo na mesma revisão**.
 - MBOM: EBOM + operação (corte, laminação, usinagem) + matéria-prima bruta.
-  Começar por uma peça só (núcleo EI: chapa, empilhamento, rebite), não pelo produto.
+  Começar por uma peça só (núcleo EI: chapa, empilhamento, rebite).
 
-**Pronto quando:** o conjunto tem duas configurações que compartilham a mesma
-definição de peça, e o núcleo tem roteiro de fabricação com matéria-prima.
+**Aceite:** duas configurações compartilham a mesma definição de peça, e o núcleo
+tem roteiro de fabricação com matéria-prima.
 
-### Fase 5 — modelo digital e pendências (#4, #2) · G
+### Fase 6 — modelo digital e pendências · G
 
 - visualizador de **conjunto**: ocorrências, explosão, corte, medida, seleção de
   corpo → item de PLM.
@@ -122,13 +128,12 @@ definição de peça, e o núcleo tem roteiro de fabricação com matéria-prima
 - painel de pendências no lugar de cronograma: ECO aberta, ECR sem triagem, filho
   não liberado, peça sem arquivo/material/massa, revisão sem ECO.
 
-**Pronto quando:** o conjunto inteiro abre e navega no `forja-pdm` sem TeamCraft
-aberto ao lado, e a tela inicial diz o que falta para liberar.
+**Aceite:** o conjunto inteiro navega no `forja-pdm` sem TeamCraft aberto ao lado, e
+a tela inicial diz o que falta para liberar.
 
 ## 4. Rotas planejadas
 
-Seguem o STYLE §1 (recurso no plural, sem nome de backend) e são todas de leitura:
-o `forja-pdm` não cria item nem libera revisão.
+Seguem o STYLE §1 (recurso no plural, sem nome de backend).
 
 | rota | devolve | fonte |
 |---|---|---|
@@ -140,34 +145,35 @@ o `forja-pdm` não cria item nem libera revisão.
 | `GET /api/changes/<code>` | ECO + revisões + prontidão | `get_change` |
 | `GET /api/changes/<code>/diff?from=&to=` | BOM/arquivos/atributos que mudam | `compare_revisions` |
 | `GET /api/library?class=&q=` | biblioteca classificada | `search_items` + `find_similar_parts` |
-| `GET /api/items/<n>/revisions/<rev>/manufacturing` | MBOM e roteiro | nova (fase 4) |
+| `POST /api/items/<n>/revisions/<rev>/checkout` | trava a revisão para o app | TeamCraft |
+| `POST /api/items/<n>/revisions/<rev>/checkin` | devolve `.sc` + STEP e deriva massa | TeamCraft + kernel |
 
 `/api/items…` continua sendo a rota pública; `/api/teamcraft/items…` fica como
-apelido até ninguém mais chamar.
+apelido até ninguém mais chamar. As duas rotas `POST` são a única escrita: o resto
+é leitura e derivado.
 
 ## 5. O que não vamos fazer
 
 - **Hospedar código no PLM (#6).** Código e documento são git; a revisão guarda no
-  máximo o ponteiro (`git_commit` ou tag) para rastrear qual código gerou o STEP.
-- **PPM completo (#2).** Gantt, alocação e portfólio são outro produto. A Forja
-  mostra **pendência de liberação**, que é o que trava a entrega.
-- **Portal de fornecedor (#8).** Contato e prazo como atributo bastam; fornecedor
-  não entra no sistema para responder cotação.
-- **Nuvem multi-tenant.** Tudo continua em `127.0.0.1`, com backup local.
+  máximo `git_commit` ou a tag que gerou o STEP.
+- **PPM completo (#2).** Gantt, alocação e portfólio são outro produto; a Forja
+  mostra **pendência de liberação**.
+- **Portal de fornecedor (#8).** Contato e prazo como atributo bastam.
+- **Nuvem multi-tenant.** App local, serviço no servidor on-premise, backup local.
 
 ## 6. Riscos e decisões abertas
 
 | risco | efeito | saída |
 |---|---|---|
-| TeamCraft 0.2.7 é binário fechado | não dá para criar tabela; tudo tem que caber em item, revisão, BOM, arquivo e `attributes` | confirmar se `attributes` é livre antes da fase 2; se não for, guardar JSON em arquivo da revisão |
-| massa da malha é aproximada (~0,1%) | número divergente do app | massa declarada é a verdade; calculada só confere e avisa |
-| numeração 2 vs 3 dígitos | STYLE §1 ainda diz 3 dígitos; a decisão da ECR-000001 foi 2 para o PS-001 | corrigir o STYLE quando a ECR fechar |
-| variante sem suporte nativo | duplicar item ou condicionar BOM | decidir na fase 4, com o caso 127/220 V do Brasa |
-| visualizador depende de CDN | não abre sem rede | empacotar three.js na fase 5 |
-| conjunto com 22 posições | malha de 54 mil triângulos já é o teto confortável | medir antes de prometer conjunto grande |
+| TeamCraft 0.2.7 é binário fechado | não dá para criar tabela; tudo cabe em item, revisão, BOM, arquivo e `attributes` | confirmar se `attributes` é livre antes da fase 2 |
+| massa da malha é aproximada (~0,1%) | número divergente do app | massa declarada é a verdade; calculada só confere |
+| numeração 2 vs 3 dígitos | STYLE §1 ainda diz 3 dígitos; a ECR-000001 decidiu 2 para o PS-001 | corrigir o STYLE quando a ECR fechar |
+| variante sem suporte nativo | duplicar item ou condicionar BOM | decidir na fase 5, com o caso 127/220 V |
+| conjunto grande congela a janela do SolidCraft | trabalho em lote travado | lote sempre no `solidcraft-cli`; a janela é para ver e ajustar |
+| visualizador depende de CDN | não abre sem rede | empacotar three.js na fase 6 |
 
 ## 7. Ordem, em uma linha
 
-**Fase 0** (peça nativa + material + massa) → **1** (catálogo e massa) →
-**2** (BOM e ECO na tela) → **3** (biblioteca e fornecedor) → **4** (variante e
-MBOM) → **5** (conjunto navegável e pendências).
+**Fase 0** (modelo, feito) → **1** (SolidCraft ↔ PDM) → **2** (catálogo e massa) →
+**3** (BOM e ECO na tela) → **4** (biblioteca e fornecedor) → **5** (variante e
+MBOM) → **6** (conjunto navegável e pendências).
