@@ -28,6 +28,11 @@
   main { flex:1; position:relative; }
   canvas { display:block; width:100%; height:100%; }
   #hint { position:absolute; left:14px; bottom:12px; color:var(--dim); font-size:12px; pointer-events:none; }
+  #tools { position:absolute; top:12px; left:12px; display:flex; gap:6px; }
+  #tools button { width:auto; margin:0; padding:6px 11px; font-size:12px; font-weight:500; background:#232a30; border-color:var(--line); }
+  #tools button.on { background:var(--hot); border-color:var(--hot); }
+  #cube { position:absolute; top:10px; right:12px; width:96px; height:96px; cursor:pointer; }
+  #cube canvas { display:block; width:96px; height:96px; }
   #tree { margin-top:12px; border-top:1px solid var(--line); }
   #tree .head { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim); padding:8px 4px 2px; }
   #tree .row { display:grid; grid-template-columns:40px 1fr auto; gap:7px; align-items:center; padding:5px 4px; border-bottom:1px solid var(--line); cursor:pointer; }
@@ -37,7 +42,7 @@
   #tree .row .t b { display:block; font-size:12px; font-weight:600; }
   #tree .row .t small { display:block; color:var(--dim); font-size:11px; }
   #tree .row .q { text-align:right; font-size:11px; color:var(--dim); }
-  #tree .row.asm { background:#1d2429; }
+  #tree .row.asm { background:#1d2429; grid-template-columns:1fr auto; }
 </style>
 </head>
 <body>
@@ -60,7 +65,17 @@
   <dl id="info"></dl>
   <table id="bodies"><thead><tr><th>corpo</th><th class="n">faces</th><th class="n">triângulos</th></tr></thead><tbody></tbody></table>
 </aside>
-<main><canvas id="view"></canvas><div id="hint">arraste: girar · roda: zoom · botão direito: deslocar · clique na peça: abrir</div></main>
+<main>
+  <canvas id="view"></canvas>
+  <div id="tools">
+    <button id="fit" title="Ajustar tudo (F)">ajustar</button>
+    <button id="spin" title="Girar automaticamente (R)">girar</button>
+    <button id="gridbtn" title="Mostrar/esconder a grade (G)">grade</button>
+    <button id="home" title="Vista isométrica (H)">iso</button>
+  </div>
+  <div id="cube" title="Clique numa face para olhar de frente"></div>
+  <div id="hint">arraste: girar · roda: zoom · botão direito: deslocar · clique na peça: abrir</div>
+</main>
 
 <script type="importmap">
 { "imports": {
@@ -95,6 +110,77 @@ scene.add(group);
 const grid = new THREE.GridHelper(200, 20, 0x2b3238, 0x1b2025);
 scene.add(grid);
 
+// ---------- cubo de orientação ----------
+// Cena própria, câmera ortográfica fixa e um cubo que gira ao contrário da
+// câmera principal: o que aparece virado para nós é o lado que estamos vendo.
+const CUBE = 96;
+const cubeCanvas = $("cube").appendChild(document.createElement("canvas"));
+const cubeRenderer = new THREE.WebGLRenderer({ canvas: cubeCanvas, alpha: true, antialias: true });
+cubeRenderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+cubeRenderer.setSize(CUBE, CUBE, false);
+const cubeScene = new THREE.Scene();
+// ±2.02 cobre a diagonal do cubo (2·√3 ≈ 3,46) em qualquer rotação, com folga.
+const cubeCamera = new THREE.OrthographicCamera(-2.02, 2.02, 2.02, -2.02, 0.1, 10);
+cubeCamera.position.set(0, 0, 4);
+cubeCamera.lookAt(0, 0, 0);
+cubeScene.add(new THREE.HemisphereLight(0xffffff, 0x2a3138, 1.7));
+
+function faceTexture(label, background) {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 128;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = background;
+  ctx.fillRect(0, 0, 128, 128);
+  ctx.strokeStyle = "#0f1216";
+  ctx.lineWidth = 10;
+  ctx.strokeRect(5, 5, 118, 118);
+  ctx.fillStyle = "#e9eef2";
+  ctx.font = "bold 21px ui-sans-serif, system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(label, 64, 66);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return new THREE.MeshBasicMaterial({ map: texture });
+}
+
+// Ordem do BoxGeometry: +x, -x, +y, -y, +z, -z (no visualizador o Y é a altura).
+const cubeMesh = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), [
+  faceTexture("DIR", "#2f4a5a"), faceTexture("ESQ", "#2f4a5a"),
+  faceTexture("TOPO", "#37543f"), faceTexture("BASE", "#37543f"),
+  faceTexture("FRENTE", "#584a2f"), faceTexture("TRÁS", "#584a2f"),
+]);
+cubeMesh.quaternion.copy(camera.quaternion).invert();
+cubeScene.add(cubeMesh);
+
+function syncCube() {
+  cubeMesh.quaternion.copy(camera.quaternion).invert();
+  cubeRenderer.render(cubeScene, cubeCamera);
+}
+
+const cubeRay = new THREE.Raycaster();
+const cubePointer = new THREE.Vector2();
+let cubeDown = null;
+
+$("cube").addEventListener("pointerdown", (event) => {
+  cubeDown = { x: event.clientX, y: event.clientY };
+});
+$("cube").addEventListener("pointerup", (event) => {
+  const start = cubeDown;
+  cubeDown = null;
+  if (!start || Math.hypot(event.clientX - start.x, event.clientY - start.y) > 4) return;
+  const rect = cubeCanvas.getBoundingClientRect();
+  cubePointer.set(
+    ((event.clientX - rect.left) / rect.width) * 2 - 1,
+    -((event.clientY - rect.top) / rect.height) * 2 + 1,
+  );
+  cubeRay.setFromCamera(cubePointer, cubeCamera);
+  const hit = cubeRay.intersectObject(cubeMesh)[0];
+  if (!hit || !hit.face) return;
+  const direction = hit.face.normal.clone().applyQuaternion(cubeMesh.quaternion).normalize();
+  setView(direction);
+});
+
 function resize() {
   const w = canvas.clientWidth, h = canvas.clientHeight;
   if (canvas.width !== w || canvas.height !== h) {
@@ -104,7 +190,13 @@ function resize() {
   }
 }
 new ResizeObserver(resize).observe(canvas);
-(function loop() { resize(); controls.update(); renderer.render(scene, camera); requestAnimationFrame(loop); })();
+(function loop() {
+  resize();
+  controls.update();
+  syncCube();
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
+})();
 
 // ---------- API ----------
 const api = (path, params) => fetch(path + (params ? "?" + new URLSearchParams(params) : "")).then(async (r) => {
@@ -123,7 +215,12 @@ async function loadProject() {
       items.map((i) => `<option value="${i.number}">${i.number} — ${i.name || i.item_type}</option>`).join("");
     status(`${items.length} item(ns) em ${project}`);
     const assembly = items.find((i) => i.item_type === "assembly");
-    if (assembly) { $("item").value = assembly.number; await loadItem(); }
+    if (assembly) {
+      $("item").value = assembly.number;
+      await loadItem();
+      // Abre já com o conjunto na tela, enquadrado e centrado.
+      if (assemblyNumber) openAssembly();
+    }
   } catch (error) { status(error.message, true); }
 }
 
@@ -283,17 +380,90 @@ async function openModel() {
 }
 
 // ---------- cena ----------
-function fit(box) {
+let lastBox = null;
+let lastGeometry = null;
+
+const _p = new THREE.Vector3();
+const _right = new THREE.Vector3();
+const _up = new THREE.Vector3();
+
+/// Desloca câmera e alvo até o que aparece na tela ficar no meio do canvas.
+/// Enquadrar pelo centro da caixa no mundo não basta: em perspectiva o centro
+/// da caixa não cai no centro da tela, e a peça fica deslocada. Aqui medimos
+/// os vértices já projetados e deslocamos o quanto falta, repetindo até
+/// convergir (o deslocamento é paralelo ao plano da imagem, então converge em
+/// duas passadas).
+function centerInView(geometry) {
+  const position = geometry && geometry.attributes && geometry.attributes.position;
+  if (!position || !position.count) return;
+  for (let pass = 0; pass < 3; pass++) {
+    camera.updateMatrixWorld();
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (let i = 0; i < position.count; i++) {
+      _p.fromBufferAttribute(position, i).project(camera);
+      if (_p.x < x0) x0 = _p.x;
+      if (_p.x > x1) x1 = _p.x;
+      if (_p.y < y0) y0 = _p.y;
+      if (_p.y > y1) y1 = _p.y;
+    }
+    const mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+    if (Math.abs(mx) < 2e-4 && Math.abs(my) < 2e-4) return;
+    const dist = camera.position.distanceTo(controls.target);
+    const halfHeight = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * dist;
+    _right.setFromMatrixColumn(camera.matrixWorld, 0);
+    _up.setFromMatrixColumn(camera.matrixWorld, 1);
+    // Mover a câmera para o lado faz o objeto parecer ir para o outro: para
+    // corrigir um desvio positivo em x/y, andamos o mesmo tanto nessa direção.
+    const shift = _right.clone().multiplyScalar(mx * halfHeight * camera.aspect)
+      .addScaledVector(_up, my * halfHeight);
+    if (!Number.isFinite(shift.x) || !Number.isFinite(shift.y) || !Number.isFinite(shift.z)) return;
+    camera.position.add(shift);
+    controls.target.add(shift);
+    camera.lookAt(controls.target);
+  }
+}
+
+/// Enquadra a geometria: alvo no centro, câmera na direção que já estava,
+/// distância pela diagonal. A grade acompanha a base da peça.
+function fit(geometry) {
+  const box = geometry && geometry.boundingBox;
+  if (!box) return;
+  lastBox = box.clone();
+  lastGeometry = geometry;
+  resize();
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3()).length() || 1;
-  group.position.set(-center.x, -center.y, -center.z);
-  grid.position.y = -box.max.y;
-  grid.scale.setScalar(size / 100);
-  camera.position.copy(center).add(new THREE.Vector3(size * 0.9, size * 0.75, size * 0.9));
-  camera.near = size / 1000;
-  camera.far = size * 20;
-  camera.updateProjectionMatrix();
+  const direction = camera.position.clone().sub(controls.target);
+  if (direction.lengthSq() < 1e-9) direction.set(1, 0.8, 1);
+  direction.normalize();
   controls.target.copy(center);
+  camera.position.copy(center).addScaledVector(direction, size * 1.35);
+  camera.up.set(0, 1, 0);
+  camera.near = Math.max(size / 1000, 0.01);
+  camera.far = Math.max(size * 40, 100);
+  camera.updateProjectionMatrix();
+  camera.lookAt(center);
+  grid.position.set(center.x, box.min.y - size * 0.003, center.z);
+  grid.scale.setScalar(Math.max(size / 100, 0.01));
+  centerInView(geometry);
+  controls.update();
+}
+
+/// Olha a peça de uma direção (usado pelo cubo e pelo botão iso).
+function setView(direction) {
+  const center = lastBox ? lastBox.getCenter(new THREE.Vector3()) : new THREE.Vector3();
+  const size = lastBox ? lastBox.getSize(new THREE.Vector3()).length() || 1 : 100;
+  const dir = direction.clone().normalize();
+  // Vista de topo/base: sem um leve desvio o "up" fica paralelo à direção.
+  if (Math.abs(dir.y) > 0.995) {
+    dir.z += 0.002;
+    dir.normalize();
+  }
+  controls.target.copy(center);
+  camera.position.copy(center).addScaledVector(dir, size * 1.35);
+  camera.up.set(0, 1, 0);
+  camera.lookAt(center);
+  if (lastGeometry) centerInView(lastGeometry);
   controls.update();
 }
 
@@ -318,7 +488,7 @@ function showMesh(positions, indices) {
   );
   wire.visible = false;
   group.add(wire);
-  fit(geometry.boundingBox);
+  fit(geometry);
   status(`malha pronta: ${indices.length / 3} triângulos`);
 }
 
@@ -355,6 +525,26 @@ $("project").addEventListener("change", loadProject);
 $("item").addEventListener("change", loadItem);
 $("rev").addEventListener("change", loadFiles);
 $("open").addEventListener("click", openModel);
+$("fit").addEventListener("click", () => fit(lastGeometry));
+$("home").addEventListener("click", () => setView(new THREE.Vector3(0.85, 0.72, 0.85)));
+$("spin").addEventListener("click", () => {
+  controls.autoRotate = !controls.autoRotate;
+  controls.autoRotateSpeed = 1.6;
+  $("spin").classList.toggle("on", controls.autoRotate);
+});
+$("gridbtn").addEventListener("click", () => {
+  grid.visible = !grid.visible;
+  $("gridbtn").classList.toggle("on", grid.visible);
+});
+$("gridbtn").classList.add("on");
+addEventListener("keydown", (event) => {
+  if (event.target.matches("input, select, textarea")) return;
+  const key = event.key.toLowerCase();
+  if (key === "f") fit(lastGeometry);
+  else if (key === "r") $("spin").click();
+  else if (key === "g") $("gridbtn").click();
+  else if (key === "h") $("home").click();
+});
 $("tree").addEventListener("click", (event) => {
   const row = event.target.closest(".row");
   if (row) openPart(row.dataset.part);

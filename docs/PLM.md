@@ -29,7 +29,7 @@ volta para dentro do PDM.
 | 1 | BOM multifuncional | **parcial** | TeamCraft tem BOM multinível (`get_bom`); o modelo já exporta BOM do conjunto (22 posições / 14 peças); o `forja-pdm` não publica BOM |
 | 2 | Planejamento conectado ao CAD | **não existe** | — (adaptação: painel de pendências) |
 | 3 | Matérias-primas | **parcial** | material e massa já existem no modelo (1.721 g); catálogo e massa calculada ainda não |
-| 4 | Modelo digital 3D | **parcial** | 14 peças nativas + montagem de 22 posições; o `forja-pdm` já mostra a árvore do `.sc`, a miniatura nativa e a montagem peça por peça |
+| 4 | Modelo digital 3D | **parcial** | 14 peças nativas + montagem de 22 posições; o `forja-pdm` já mostra a árvore do `.sc`, a miniatura nativa, a montagem peça por peça e o visualizador com cubo de orientação, enquadrar (F), girar (R), grade (G) e a peça centrada ao abrir |
 | 5 | Alterações formais | **parcial** | ECR/ECO e prontidão completos no TeamCraft; a ECO do modelo nativo (CHG-000010) foi submetida e aprovada, mas nada disso aparece no `forja-pdm` |
 | 6 | Código-fonte no PLM | **fora de escopo** | código e documento são git; a revisão guarda no máximo o ponteiro |
 | 7 | Classificação IP | **parcial** | `classification` da revisão existe; sem taxonomia nem busca por classe |
