@@ -123,15 +123,16 @@
     <button id="spin" title="Girar automaticamente (R)">girar</button>
     <button id="gridbtn" title="Mostrar/esconder a grade (G)">grade</button>
     <button id="home" title="Vista isométrica (H)">iso</button>
+    <button id="cadview" title="Abrir no SolidCraft (S)">SolidCraft</button>
   </div>
   <div id="cube" title="Clique numa face para olhar de frente"></div>
-  <div id="hint">arraste: girar · roda: zoom · botão direito: deslocar · clique na peça: abrir</div>
+  <div id="hint">arraste: girar · roda: zoom · botão direito: deslocar · clique na peça: abrir · S: SolidCraft</div>
 </main>
 
 <script type="importmap">
 { "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+  "three": "/vendor/three.module.min.js",
+  "three/addons/controls/OrbitControls.js": "/vendor/OrbitControls.js"
 } }
 </script>
 <script type="module">
@@ -361,6 +362,7 @@ async function openPart(number) {
   const step = options.find((o) => /\.step$/i.test(o.value)) || options[0];
   if (!step) return status(`${number}: revisão sem arquivo`, true);
   $("file").value = step.value;
+  cadTarget = { number, rev: $("rev").value };
   markRow(number);
   await openModel();
 }
@@ -370,6 +372,7 @@ async function openAssembly() {
   const code = assemblyNumber || $("item").value;
   const rev = assemblyNumber ? assemblyRev : $("rev").value;
   if (!code) return;
+  cadTarget = { number: code, rev };
   status("montando o conjunto a partir das peças…");
   try {
     const response = await fetch("/api/assembly?" + new URLSearchParams({ code, rev, format: "bin" }));
@@ -765,6 +768,15 @@ function diffHtml(data) {
 }
 
 // ---------- abrir no SolidCraft ----------
+// O viewport mostra uma peça ou o conjunto; o botão do app manda o que está na
+// tela, não o que estiver no formulário.
+let cadTarget = null;
+
+function shownTarget() {
+  if (cadTarget) return cadTarget;
+  return { number: $("item").value, rev: $("rev").value };
+}
+
 async function openInCad(number, revision) {
   if (!number) return;
   status(`levando ${number}@${revision || "?"} ao SolidCraft…`);
@@ -814,13 +826,19 @@ $("gridbtn").addEventListener("click", () => {
   $("gridbtn").classList.toggle("on", grid.visible);
 });
 $("gridbtn").classList.add("on");
+$("cadview").addEventListener("click", () => {
+  const target = shownTarget();
+  openInCad(target.number, target.rev);
+});
 addEventListener("keydown", (event) => {
   if (event.target.matches("input, select, textarea")) return;
+  if (event.ctrlKey || event.metaKey || event.altKey) return;
   const key = event.key.toLowerCase();
   if (key === "f") fit(lastGeometry);
   else if (key === "r") $("spin").click();
   else if (key === "g") $("gridbtn").click();
   else if (key === "h") $("home").click();
+  else if (key === "s") $("cadview").click();
 });
 $("tree").addEventListener("click", (event) => {
   const row = event.target.closest(".row");

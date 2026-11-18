@@ -63,7 +63,12 @@ controle do app — JSON por linha em `127.0.0.1:<porta>` com o token de
 `~/.var/app/io.tangencylabs.solidcraft/data/solidcraft/control/`. Sem app
 rodando, tenta `flatpak run io.tangencylabs.solidcraft <arquivo>`. `FORJA_CAD_DIR`,
 `FORJA_SOLIDCRAFT_CONTROL`, `FORJA_SOLIDCRAFT_PORT` e `FORJA_SOLIDCRAFT_TOKEN`
-trocam os padrões.
+trocam os padrões. Na interface, o botão `SC` de cada linha da árvore e o
+`SolidCraft` do viewport (tecla `S`) chamam essa rota com o que está na tela.
+
+O visualizador é **autocontido**: o three.js (MIT) vai embutido em
+`crates/forja-pdm/web/vendor/` e servido em `/vendor/`, sem CDN — o serviço sobe
+numa rede isolada e continua funcionando.
 
 Autenticação por bearer token: `admin_token` no `~/teamcraft/credentials.txt`.
 O `forja-pdm` lê `FORJA_TEAMCRAFT_TOKEN`; sem ela, cai no `credentials.txt`.

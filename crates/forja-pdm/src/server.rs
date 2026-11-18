@@ -69,6 +69,9 @@ fn handle(app: &App, request: tiny_http::Request) {
         .collect();
     let result: Result<(u16, &'static str, Vec<u8>)> = match segments.as_slice() {
         [] | ["index.html"] => Ok((200, "text/html; charset=utf-8", VIEWER.as_bytes().to_vec())),
+        // three.js empacotado (MIT): a interface funciona sem internet.
+        ["vendor", "three.module.min.js"] => Ok((200, JS, THREE.as_bytes().to_vec())),
+        ["vendor", "OrbitControls.js"] => Ok((200, JS, THREE_CONTROLS.as_bytes().to_vec())),
         ["healthz"] => Ok((200, JSON, to_json(&health(app)))),
         // `/api/items` é a rota pública (STYLE §1); `/api/teamcraft/items` fica
         // como apelido para quem já chamava a versão antiga.
@@ -497,6 +500,7 @@ fn content_type_for(format: &str) -> &'static str {
 }
 
 const JSON: &str = "application/json; charset=utf-8";
+const JS: &str = "text/javascript; charset=utf-8";
 
 fn to_json(value: &Value) -> Vec<u8> {
     serde_json::to_vec(value).unwrap_or_else(|_| b"{\"error\":\"JSON\"}".to_vec())
@@ -533,5 +537,8 @@ fn split_url(url: &str) -> (String, BTreeMap<String, String>) {
     (path.to_string(), map)
 }
 
-/// Visualizador embutido (three.js pelo CDN).
+/// Visualizador embutido. O three.js vai junto (`web/vendor/`): o serviço é
+/// on-premise e a interface não pode depender de CDN.
 const VIEWER: &str = include_str!("../web/index.html");
+const THREE: &str = include_str!("../web/vendor/three.module.min.js");
+const THREE_CONTROLS: &str = include_str!("../web/vendor/OrbitControls.js");
