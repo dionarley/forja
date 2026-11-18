@@ -11,6 +11,8 @@
 //! forja-pdm health                        # TeamCraft + vault
 //! ```
 
+mod cad;
+mod changes;
 mod handlers;
 mod kernel;
 mod native;

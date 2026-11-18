@@ -133,6 +133,31 @@ impl Client {
         ))
     }
 
+    /// Revisão completa: `{ revision, files, bom, changes, open_requests }`.
+    pub fn revision(&self, number: &str, revision: &str) -> Result<serde_json::Value> {
+        self.get_json(&format!(
+            "/api/v1/items/{}/revisions/{}",
+            encode(number),
+            encode(revision)
+        ))
+    }
+
+    /// ECOs, mais recentes primeiro. A lista não traz os itens: quem precisa
+    /// deles pede `change` de cada uma.
+    pub fn changes(&self, limit: usize) -> Result<serde_json::Value> {
+        self.get_json(&format!("/api/v1/changes?limit={limit}"))
+    }
+
+    /// Uma ECO: `{ change, items, reviews, review_round, earlier_rounds }`.
+    pub fn change(&self, number: &str) -> Result<serde_json::Value> {
+        self.get_json(&format!("/api/v1/changes/{}", encode(number)))
+    }
+
+    /// Prontidão de liberação: `{ ready, blockers, warnings }`.
+    pub fn readiness(&self, number: &str) -> Result<serde_json::Value> {
+        self.get_json(&format!("/api/v1/changes/{}/readiness", encode(number)))
+    }
+
     /// O objeto do vault de um SHA-256.
     pub fn object(&self, sha256: &str) -> Result<Vec<u8>> {
         if sha256.len() != 64 || !sha256.bytes().all(|b| b.is_ascii_hexdigit()) {

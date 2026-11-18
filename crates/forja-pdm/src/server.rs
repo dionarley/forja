@@ -11,6 +11,7 @@ use crate::kernel::KernelMesh;
 use crate::native::Design;
 use crate::open::{self, Cache, Opened};
 use crate::teamcraft::{self, Client};
+use crate::{cad, changes};
 
 /// Tudo o que uma requisição precisa.
 pub struct App {
@@ -103,6 +104,37 @@ fn handle(app: &App, request: tiny_http::Request) {
         // A montagem inteira: cada peça nas suas posições, direto do `.sc`.
         ["api", "assembly"] => assembly(app, &query),
         ["api", "mesh"] => mesh(app, &query),
+        // Painel de alterações: ECOs do projeto, detalhe com prontidão e diff
+        // entre revisões. O fluxo (submeter, revisar, aprovar) é do TeamCraft.
+        ["api", "changes"] => {
+            let project = query
+                .get("project")
+                .map(String::as_str)
+                .filter(|p| !p.is_empty());
+            let limit = query
+                .get("limit")
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(50);
+            changes::list(app, project, limit).map(|v| (200, JSON, to_json(&v)))
+        }
+        ["api", "changes", number] => {
+            changes::detail(app, number).map(|v| (200, JSON, to_json(&v)))
+        }
+        ["api", "diff"] => (|| {
+            let number = required(&query, "number")?;
+            let from = required(&query, "from")?;
+            let to = required(&query, "to")?;
+            changes::diff(app, &number, &from, &to).map(|v| (200, JSON, to_json(&v)))
+        })(),
+        // Leva a peça nativa ao app SolidCraft (e diz onde o arquivo ficou).
+        ["api", "cad"] => (|| {
+            let code = required(&query, "code")?;
+            let revision = match query.get("rev").filter(|r| !r.is_empty()) {
+                Some(rev) => rev.clone(),
+                None => latest_revision(&app.client, &code)?,
+            };
+            cad::open(app, &code, &revision).map(|v| (200, JSON, to_json(&v)))
+        })(),
         ["api", "raw"] => load(app, &query).map(|opened| {
             let content_type = opened
                 .metadata()
