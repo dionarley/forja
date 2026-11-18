@@ -43,12 +43,27 @@ Rotas que o `forja-pdm` publica em `127.0.0.1:8090` (a UI é `/`):
 | `GET /api/tree?code=&rev=` | árvore da montagem lida do `.sc` nativo, com material e massa do PDM |
 | `GET /api/thumb?code=&rev=` | miniatura que o SolidCraft grava dentro do `.sc` da peça |
 | `GET /api/assembly?code=&rev=` | a montagem inteira: cada peça nas suas posições (22 no PS-001) |
+| `GET /api/changes?project=PS-001` | ECOs do projeto, com os itens de cada uma |
+| `GET /api/changes/<n>` | ECO + prontidão de liberação (bloqueios e avisos) e revisores |
+| `GET /api/diff?number=&from=&to=` | diff de duas revisões: atributos, arquivos e BOM |
+| `GET /api/cad?code=&rev=` | leva o `.sc` ao app SolidCraft e diz onde o arquivo ficou |
 | `GET /api/open`, `/api/mesh`, `/api/raw` | metadados, malha FJPM e bytes do arquivo |
 | `GET /healthz` | TeamCraft, token e vault |
 
 O `.sc` é lido **sem converter**: `document.json` dá a estrutura (componentes,
 links, ocorrências) e `cache/thumbnail.png` dá a miniatura. A geometria da malha
 vem do STEP que a própria revisão guarda — o `.sc` não descreve malha.
+
+A ECO continua sendo do TeamCraft: o `forja-pdm` só lê e mostra. Submeter,
+revisar e liberar são `POST /changes/<n>/{submit,review}` e ficam para a pessoa.
+
+`/api/cad` grava o `.sc` em `~/Documentos/forja-cad/<item>-<rev>.sc` (o sandbox
+do flatpak enxerga `xdg-documents`) e manda `doc.open` pelo protocolo de
+controle do app — JSON por linha em `127.0.0.1:<porta>` com o token de
+`~/.var/app/io.tangencylabs.solidcraft/data/solidcraft/control/`. Sem app
+rodando, tenta `flatpak run io.tangencylabs.solidcraft <arquivo>`. `FORJA_CAD_DIR`,
+`FORJA_SOLIDCRAFT_CONTROL`, `FORJA_SOLIDCRAFT_PORT` e `FORJA_SOLIDCRAFT_TOKEN`
+trocam os padrões.
 
 Autenticação por bearer token: `admin_token` no `~/teamcraft/credentials.txt`.
 O `forja-pdm` lê `FORJA_TEAMCRAFT_TOKEN`; sem ela, cai no `credentials.txt`.

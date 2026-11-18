@@ -35,14 +35,49 @@
   #cube canvas { display:block; width:96px; height:96px; }
   #tree { margin-top:12px; border-top:1px solid var(--line); }
   #tree .head { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim); padding:8px 4px 2px; }
-  #tree .row { display:grid; grid-template-columns:40px 1fr auto; gap:7px; align-items:center; padding:5px 4px; border-bottom:1px solid var(--line); cursor:pointer; }
+  #tree .row { display:grid; grid-template-columns:40px 1fr auto 22px; gap:7px; align-items:center; padding:5px 4px; border-bottom:1px solid var(--line); cursor:pointer; }
   #tree .row:hover { background:#1b2025; }
   #tree .row.sel { background:#1e2a31; }
   #tree .row img { width:40px; height:28px; object-fit:contain; background:#15181c; border-radius:3px; }
   #tree .row .t b { display:block; font-size:12px; font-weight:600; }
   #tree .row .t small { display:block; color:var(--dim); font-size:11px; }
   #tree .row .q { text-align:right; font-size:11px; color:var(--dim); }
-  #tree .row.asm { background:#1d2429; grid-template-columns:1fr auto; }
+  #tree .row.asm { background:#1d2429; grid-template-columns:1fr auto 22px; }
+  #tree .row button.sc { width:22px; height:22px; margin:0; padding:0; font-size:9px; font-weight:600; background:#232a30; border:1px solid var(--line); border-radius:4px; color:var(--dim); }
+  #tree .row button.sc:hover { background:var(--hot); border-color:var(--hot); color:var(--ink); }
+  #tabs { display:flex; gap:6px; margin:0 0 12px; }
+  #tabs button { flex:1; margin:0; padding:6px 8px; font-size:12px; font-weight:600; background:#1b2025; border-color:var(--line); color:var(--dim); }
+  #tabs button.on { background:var(--hot); border-color:var(--hot); color:var(--ink); }
+  #cad { margin-top:8px; background:#232a30; border-color:var(--line); font-weight:500; }
+  #eco-head { display:flex; align-items:center; gap:8px; margin:0 0 8px; color:var(--dim); font-size:12px; }
+  #eco-head button { width:auto; margin:0 0 0 auto; padding:4px 9px; font-size:11px; font-weight:500; background:#232a30; border-color:var(--line); }
+  .empty { color:var(--dim); font-size:12px; }
+  .chg { border:1px solid var(--line); border-radius:6px; margin-bottom:8px; background:#1b2025; }
+  .chg > .top { display:flex; align-items:center; gap:6px; padding:7px 9px; cursor:pointer; }
+  .chg .num { font-size:12px; font-weight:600; }
+  .chg .when { margin-left:auto; font-size:11px; color:var(--dim); }
+  .chg .title { padding:0 9px; font-size:12px; }
+  .chg .meta { padding:2px 9px 8px; font-size:11px; color:var(--dim); }
+  .chg .body { display:none; border-top:1px solid var(--line); padding:8px 9px 9px; font-size:12px; color:var(--dim); }
+  .chg.open .body { display:block; }
+  .chip { font-size:10px; text-transform:uppercase; letter-spacing:.06em; padding:1px 6px; border-radius:10px; border:1px solid #454b50; color:#9aa1a7; }
+  .chip.draft { color:#d8b26a; border-color:#6a5527; }
+  .chip.in_review { color:#7fb3d0; border-color:#2f6f8f; }
+  .chip.released { color:#8fc79b; border-color:#3d6b47; }
+  .sub2 { margin:9px 0 3px; font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--dim); }
+  .chg .body p { margin:0 0 6px; color:var(--ink); font-size:12px; }
+  .chg .body p.ok { color:#8fc79b; }
+  .chg .body p.bad { color:#d8a06a; }
+  .chg ul { margin:0; padding:0; list-style:none; }
+  .chg li { display:flex; gap:6px; align-items:baseline; padding:3px 0; border-bottom:1px solid #262c31; color:var(--ink); flex-wrap:wrap; }
+  .chg li small { color:var(--dim); }
+  .chg li .grow { flex:1; }
+  .chg button.mini { width:auto; margin:0; padding:2px 7px; font-size:10px; font-weight:500; background:#232a30; border-color:var(--line); }
+  .diffbox { margin:7px 0 2px; border:1px solid var(--line); border-radius:6px; padding:6px 8px; background:#15181c; }
+  .diffbox .head { font-weight:600; font-size:12px; color:var(--ink); margin-bottom:2px; }
+  .diffbox .add { color:#8fc79b; }
+  .diffbox .rem { color:#c98b6b; }
+  .diffbox .mod { color:#d8b26a; }
 </style>
 </head>
 <body>
@@ -50,20 +85,36 @@
   <h1>Forja <span>PDM</span></h1>
   <p class="sub">estrutura do <code>.sc</code> nativo · malha do STEP pelo kernel solidcore</p>
 
-  <label for="project">Projeto</label>
-  <input id="project" value="PS-001" />
-  <label for="item">Item</label>
-  <select id="item"><option value="">— carregue o projeto —</option></select>
-  <label for="rev">Revisão</label>
-  <select id="rev"><option value="">—</option></select>
-  <label for="file">Arquivo</label>
-  <select id="file"><option value="">— modelos —</option></select>
+  <div id="tabs">
+    <button data-tab="part" class="on">peça</button>
+    <button data-tab="eco">alterações</button>
+  </div>
 
-  <button id="open" disabled>Abrir no serviço</button>
-  <div id="status"></div>
-  <div id="tree"></div>
-  <dl id="info"></dl>
-  <table id="bodies"><thead><tr><th>corpo</th><th class="n">faces</th><th class="n">triângulos</th></tr></thead><tbody></tbody></table>
+  <section id="tab-part">
+    <label for="project">Projeto</label>
+    <input id="project" value="PS-001" />
+    <label for="item">Item</label>
+    <select id="item"><option value="">— carregue o projeto —</option></select>
+    <label for="rev">Revisão</label>
+    <select id="rev"><option value="">—</option></select>
+    <label for="file">Arquivo</label>
+    <select id="file"><option value="">— modelos —</option></select>
+
+    <button id="open" disabled>Abrir no serviço</button>
+    <button id="cad" disabled>Abrir no SolidCraft</button>
+    <div id="status"></div>
+    <div id="tree"></div>
+    <dl id="info"></dl>
+    <table id="bodies"><thead><tr><th>corpo</th><th class="n">faces</th><th class="n">triângulos</th></tr></thead><tbody></tbody></table>
+  </section>
+
+  <section id="tab-eco" hidden>
+    <div id="eco-head">
+      <span id="eco-summary">—</span>
+      <button id="eco-refresh" title="Reler as ECOs do TeamCraft">atualizar</button>
+    </div>
+    <div id="changes"></div>
+  </section>
 </aside>
 <main>
   <canvas id="view"></canvas>
@@ -246,6 +297,7 @@ async function loadFiles() {
     $("file").innerHTML = (models.length ? models : files)
       .map((f) => `<option value="${f.filename}">${f.folder ? f.folder + "/" : ""}${f.filename}</option>`).join("");
     $("open").disabled = !files.length;
+    $("cad").disabled = !number || !rev;
     status(`${files.length} arquivo(s); ${models.length} modelo(s)`);
     await loadTree();
   } catch (error) { status(error.message, true); }
@@ -275,15 +327,17 @@ async function loadTree() {
       const thumb = pdm.number
         ? `<img loading="lazy" alt="" src="/api/thumb?code=${encodeURIComponent(pdm.number)}&rev=${encodeURIComponent(pdm.revision || "")}">`
         : "<span></span>";
-      return `<div class="row" data-part="${pdm.number || ""}">${thumb}
+      return `<div class="row" data-part="${pdm.number || ""}" data-rev="${pdm.revision || ""}">${thumb}
         <div class="t"><b>${pdm.number || p.name}</b><small>${p.name}${pdm.material ? " · " + pdm.material : ""}</small></div>
-        <div class="q">×${p.occurrences}<br>${mass}</div></div>`;
+        <div class="q">×${p.occurrences}<br>${mass}</div>
+        <button class="sc" title="abrir no SolidCraft">SC</button></div>`;
     }).join("");
     $("tree").innerHTML =
       `<div class="head">montagem</div>
-       <div class="row asm" data-part="">
+       <div class="row asm" data-part="" data-rev="">
          <div class="t"><b>${tree.name}</b><small>${tree.components} definições · ${tree.occurrences} posições · ${data.file.name}</small></div>
          <div class="q">conjunto<br>${(treeTotal * 1000).toFixed(0)} g</div>
+         <button class="sc" title="abrir no SolidCraft">SC</button>
        </div>
        <div class="head">peças (${tree.components})</div>${rows}`;
     const selected = tree.parts.find((p) => (p.pdm || {}).number === number);
@@ -521,10 +575,233 @@ function fillKernel(kernel, cached) {
   if (kernel.failures.length) status(`${kernel.failures.length} corpo(s) recusado(s): ${kernel.failures[0]}`, true);
 }
 
+// ---------- alterações (ECO) ----------
+// O TeamCraft decide; a Forja lê. A lista traz as ECOs com os itens; o detalhe
+// (prontidão, revisores) só é pedido quando a pessoa abre a ECO.
+const STATUS = {
+  draft: "rascunho", in_review: "em revisão", released: "liberada",
+  cancelled: "cancelada", obsolete: "obsoleta",
+};
+const BOM_FIELDS = { quantity: "qtd", released_child_code: "liberada", child_unit: "unidade", notes: "nota" };
+const escapeHtml = (text) => String(text ?? "").replace(/[&<>"']/g, (c) => ({
+  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+}[c]));
+const showValue = (value) => value === null || value === undefined
+  ? "—"
+  : typeof value === "object" ? JSON.stringify(value) : String(value);
+const clip = (text, max = 120) => (text.length > max ? text.slice(0, max - 1) + "…" : text);
+const day = (iso) => (iso ? iso.slice(0, 10).split("-").reverse().join("/") : "");
+
+let ecoProject = null;
+
+function showTab(name) {
+  for (const button of $("tabs").querySelectorAll("button")) {
+    button.classList.toggle("on", button.dataset.tab === name);
+  }
+  $("tab-part").hidden = name !== "part";
+  $("tab-eco").hidden = name !== "eco";
+  document.querySelector("aside").scrollTop = 0;
+  if (name === "eco" && ecoProject !== $("project").value.trim()) loadChanges();
+}
+
+async function loadChanges() {
+  const project = $("project").value.trim();
+  if (!project) return;
+  ecoProject = project;
+  $("eco-summary").textContent = "lendo…";
+  $("changes").innerHTML = "";
+  try {
+    const data = await api("/api/changes", { project });
+    const changes = data.changes || [];
+    $("eco-summary").textContent = `${changes.length} ECO(s) de ${project}` +
+      (data.skipped ? ` · ${data.skipped} não carregaram` : "");
+    $("changes").innerHTML = changes.length
+      ? changes.map(changeCard).join("")
+      : `<p class="empty">nenhuma ECO com itens de ${escapeHtml(project)}</p>`;
+  } catch (error) {
+    $("eco-summary").textContent = "erro";
+    $("changes").innerHTML = `<p class="empty">${escapeHtml(error.message)}</p>`;
+  }
+}
+
+function changeCard(change) {
+  const items = change.items || [];
+  const first = items.slice(0, 3).map((i) => `${i.item_number}@${i.code}`).join(" · ");
+  const more = items.length > 3 ? ` +${items.length - 3}` : "";
+  return `<div class="chg" data-number="${change.number}">
+    <div class="top"><span class="num">${change.number}</span>
+      <span class="chip ${change.status}">${STATUS[change.status] || change.status}</span>
+      <span class="when">${day(change.created_at)}</span></div>
+    <div class="title">${escapeHtml(change.title)}</div>
+    <div class="meta">${escapeHtml(first)}${more}${items.length ? "" : " · sem itens"}</div>
+    <div class="body"></div>
+  </div>`;
+}
+
+async function fillChange(card) {
+  const body = card.querySelector(".body");
+  body.innerHTML = `<p class="empty">lendo ${card.dataset.number}…</p>`;
+  try {
+    const data = await api(`/api/changes/${encodeURIComponent(card.dataset.number)}`);
+    body.innerHTML = changeBody(data);
+    card.dataset.loaded = "1";
+  } catch (error) {
+    body.innerHTML = `<p class="empty">${escapeHtml(error.message)}</p>`;
+  }
+}
+
+function changeBody(data) {
+  const change = data.change || {};
+  const items = data.items || [];
+  const readiness = data.readiness || {};
+  const reviews = data.reviews || [];
+  const out = [`<p>${escapeHtml(change.description || "")}</p>`];
+  out.push(`<div class="sub2">itens (${items.length})</div><ul>${items.map(itemLine).join("")}</ul>`);
+  out.push(`<div class="sub2">prontidão</div>`);
+  if (readiness.error) {
+    out.push(`<p class="bad">${escapeHtml(readiness.error)}</p>`);
+  } else if (readiness.ready) {
+    out.push(`<p class="ok">pronta para liberar</p>`);
+  } else {
+    const blockers = readiness.blockers || [];
+    out.push(`<p class="bad">${blockers.length} bloqueio(s)</p>`);
+    out.push(`<ul>${blockers.map(problemLine).join("")}</ul>`);
+  }
+  const warnings = readiness.warnings || [];
+  if (warnings.length) {
+    out.push(`<div class="sub2">avisos (${warnings.length})</div><ul>${warnings.map(problemLine).join("")}</ul>`);
+  }
+  out.push(`<div class="sub2">revisores</div>`);
+  out.push(reviews.length
+    ? `<ul>${reviews.map(reviewLine).join("")}</ul>`
+    : `<p class="empty">sem revisor registrado</p>`);
+  return out.join("");
+}
+
+function itemLine(item) {
+  return `<li><b>${item.item_number}@${item.code}</b>
+    <small>${escapeHtml(item.action)} · ${escapeHtml(item.state)}</small>
+    <small>${escapeHtml(item.name || "")}</small>
+    <span class="grow"></span>
+    <button class="mini diff" data-item="${item.item_number}" data-rev="${item.code}">diff</button></li>`;
+}
+
+function problemLine(problem) {
+  const label = problem.item_number || problem.revision_label || "?";
+  const extra = problem.other_change ? ` · ${problem.other_change}` : "";
+  return `<li><b>${escapeHtml(label)}</b><small>${escapeHtml(problem.problem || "")}${escapeHtml(extra)}</small></li>`;
+}
+
+function reviewLine(review) {
+  const comment = review.comment ? ` · ${review.comment}` : "";
+  return `<li><b>${escapeHtml(review.reviewer_username)}</b>
+    <small>${escapeHtml(review.decision || "")}${escapeHtml(comment)} · ${day(review.decided_at)}</small></li>`;
+}
+
+async function openDiff(button) {
+  const line = button.closest("li");
+  const existing = line.querySelector(".diffbox");
+  if (existing) {
+    existing.remove();
+    return;
+  }
+  const item = button.dataset.item, to = button.dataset.rev;
+  const box = document.createElement("div");
+  box.className = "diffbox";
+  box.innerHTML = `<div class="head">${item} — lendo revisões…</div>`;
+  line.appendChild(box);
+  try {
+    const detail = await api(`/api/items/${encodeURIComponent(item)}`);
+    const revisions = (detail.revisions || []).slice().sort((a, b) => a.seq - b.seq);
+    const index = revisions.findIndex((revision) => revision.code === to);
+    if (index <= 0) {
+      box.querySelector(".head").textContent = `${item}@${to} — primeira revisão, sem diff`;
+      return;
+    }
+    const from = revisions[index - 1].code;
+    const data = await api("/api/diff", { number: item, from, to });
+    box.innerHTML = diffHtml(data);
+  } catch (error) {
+    box.querySelector(".head").textContent = error.message;
+  }
+}
+
+function diffHtml(data) {
+  const meta = data.meta || [];
+  const files = data.files || {};
+  const bom = data.bom || {};
+  const out = [`<div class="head">${data.number} <span class="mod">${data.from} → ${data.to}</span></div>`];
+  out.push(`<div class="sub2">atributos</div>`);
+  out.push(meta.length
+    ? `<ul>${meta.map((entry) => {
+      const from = showValue(entry.from), to = showValue(entry.to);
+      return `<li><b>${escapeHtml(entry.field)}</b>
+        <small title="${escapeHtml(from + " → " + to)}">${escapeHtml(clip(from))} → ${escapeHtml(clip(to))}</small></li>`;
+    }).join("")}</ul>`
+    : `<p class="empty">sem mudança de atributo</p>`);
+
+  const fileLines = [
+    ...(files.added || []).map((file) => `<li class="add">+ ${escapeHtml(file.path)}</li>`),
+    ...(files.removed || []).map((file) => `<li class="rem">− ${escapeHtml(file.path)}</li>`),
+    ...(files.changed || []).map((file) => `<li class="mod">~ ${escapeHtml(file.path)}
+      <small>v${showValue(file.from_version)} → v${showValue(file.to_version)}</small></li>`),
+  ];
+  out.push(`<div class="sub2">arquivos</div>`);
+  out.push(fileLines.length ? `<ul>${fileLines.join("")}</ul>` : `<p class="empty">sem mudança de arquivo</p>`);
+
+  const bomLines = [
+    ...(bom.added || []).map((line) => `<li class="add">+ ${escapeHtml(line.child)}
+      <small>${escapeHtml(line.name || "")} ×${showValue(line.quantity)}</small></li>`),
+    ...(bom.removed || []).map((line) => `<li class="rem">− ${escapeHtml(line.child)}
+      <small>${escapeHtml(line.name || "")} ×${showValue(line.quantity)}</small></li>`),
+    ...(bom.changed || []).map((line) => `<li class="mod">~ ${escapeHtml(line.child)}
+      <small>${line.fields.map((field) =>
+        `${BOM_FIELDS[field.field] || escapeHtml(field.field)}: ${escapeHtml(showValue(field.from))} → ${escapeHtml(showValue(field.to))}`
+      ).join(" · ")}</small></li>`),
+  ];
+  out.push(`<div class="sub2">BOM</div>`);
+  out.push(bomLines.length ? `<ul>${bomLines.join("")}</ul>` : `<p class="empty">sem mudança de BOM</p>`);
+  return out.join("");
+}
+
+// ---------- abrir no SolidCraft ----------
+async function openInCad(number, revision) {
+  if (!number) return;
+  status(`levando ${number}@${revision || "?"} ao SolidCraft…`);
+  try {
+    const data = await api("/api/cad", { code: number, rev: revision || "" });
+    if (data.opened) {
+      status(`aberto no SolidCraft (${data.mode}): ${data.path}`);
+    } else {
+      status(`arquivo pronto em ${data.path}${data.error ? " — " + data.error : ""}`, true);
+    }
+  } catch (error) {
+    status(error.message, true);
+  }
+}
+
 $("project").addEventListener("change", loadProject);
 $("item").addEventListener("change", loadItem);
 $("rev").addEventListener("change", loadFiles);
 $("open").addEventListener("click", openModel);
+$("tabs").addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-tab]");
+  if (button) showTab(button.dataset.tab);
+});
+$("eco-refresh").addEventListener("click", loadChanges);
+$("cad").addEventListener("click", () => openInCad($("item").value, $("rev").value));
+$("changes").addEventListener("click", (event) => {
+  const diff = event.target.closest("button.diff");
+  if (diff) {
+    openDiff(diff);
+    return;
+  }
+  const card = event.target.closest(".chg");
+  if (card && event.target.closest(".top")) {
+    const open = card.classList.toggle("open");
+    if (open && !card.dataset.loaded) fillChange(card);
+  }
+});
 $("fit").addEventListener("click", () => fit(lastGeometry));
 $("home").addEventListener("click", () => setView(new THREE.Vector3(0.85, 0.72, 0.85)));
 $("spin").addEventListener("click", () => {
@@ -547,7 +824,14 @@ addEventListener("keydown", (event) => {
 });
 $("tree").addEventListener("click", (event) => {
   const row = event.target.closest(".row");
-  if (row) openPart(row.dataset.part);
+  if (!row) return;
+  const cad = event.target.closest("button.sc");
+  if (cad) {
+    // Na linha da montagem `data-part` vem vazio: vale o conjunto carregado.
+    openInCad(row.dataset.part || assemblyNumber, row.dataset.rev || assemblyRev);
+    return;
+  }
+  openPart(row.dataset.part);
 });
 loadProject();
 </script>
