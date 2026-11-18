@@ -158,6 +158,17 @@ impl Client {
         self.get_json(&format!("/api/v1/changes/{}/readiness", encode(number)))
     }
 
+    /// Solicitações de mudança (ECR), mais recentes primeiro. A lista é rasa;
+    /// itens, ECOs ligadas e discussão vêm no detalhe.
+    pub fn change_requests(&self, limit: usize) -> Result<serde_json::Value> {
+        self.get_json(&format!("/api/v1/change-requests?limit={limit}"))
+    }
+
+    /// Uma ECR: `{ change_request, items, changes, comments, history, can }`.
+    pub fn change_request(&self, number: &str) -> Result<serde_json::Value> {
+        self.get_json(&format!("/api/v1/change-requests/{}", encode(number)))
+    }
+
     /// O objeto do vault de um SHA-256.
     pub fn object(&self, sha256: &str) -> Result<Vec<u8>> {
         if sha256.len() != 64 || !sha256.bytes().all(|b| b.is_ascii_hexdigit()) {
@@ -174,7 +185,12 @@ impl Client {
     }
 
     /// Acha o arquivo pelo nome (pasta inclusa, tolerando maiúsculas) e o lê.
-    pub fn read_file(&self, number: &str, revision: &str, wanted: &str) -> Result<(FileRef, Vec<u8>)> {
+    pub fn read_file(
+        &self,
+        number: &str,
+        revision: &str,
+        wanted: &str,
+    ) -> Result<(FileRef, Vec<u8>)> {
         let files = self.files(number, revision)?;
         let wanted_norm = wanted.trim_start_matches("./").to_ascii_lowercase();
         let found = files
@@ -208,7 +224,8 @@ fn default_vault() -> Result<PathBuf> {
 /// Sem `FORJA_TEAMCRAFT_TOKEN`, tenta o `credentials.txt` da instalação local.
 fn read_credentials_token() -> Option<String> {
     let home = std::env::var("HOME").ok()?;
-    let text = std::fs::read_to_string(PathBuf::from(home).join("teamcraft/credentials.txt")).ok()?;
+    let text =
+        std::fs::read_to_string(PathBuf::from(home).join("teamcraft/credentials.txt")).ok()?;
     let mut fallback = None;
     for line in text.lines() {
         let line = line.trim();

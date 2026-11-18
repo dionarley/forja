@@ -45,6 +45,8 @@ Rotas que o `forja-pdm` publica em `127.0.0.1:8090` (a UI é `/`):
 | `GET /api/assembly?code=&rev=` | a montagem inteira: cada peça nas suas posições (22 no PS-001) |
 | `GET /api/changes?project=PS-001` | ECOs do projeto, com os itens de cada uma |
 | `GET /api/changes/<n>` | ECO + prontidão de liberação (bloqueios e avisos) e revisores |
+| `GET /api/requests?project=PS-001` | ECRs do projeto (itens contados) |
+| `GET /api/requests/<n>` | ECR completa: itens, ECOs ligadas, discussão, decisão e `can` |
 | `GET /api/diff?number=&from=&to=` | diff de duas revisões: atributos, arquivos e BOM |
 | `GET /api/cad?code=&rev=` | leva o `.sc` ao app SolidCraft e diz onde o arquivo ficou |
 | `GET /api/open`, `/api/mesh`, `/api/raw` | metadados, malha FJPM e bytes do arquivo |
@@ -56,6 +58,9 @@ vem do STEP que a própria revisão guarda — o `.sc` não descreve malha.
 
 A ECO continua sendo do TeamCraft: o `forja-pdm` só lê e mostra. Submeter,
 revisar e liberar são `POST /changes/<n>/{submit,review}` e ficam para a pessoa.
+O mesmo vale para a ECR: o painel mostra estado, itens, ECOs ligadas, discussão
+e decisão; aceitar, adiar, rejeitar e implementar (`can` diz quem pode) são do
+TeamCraft.
 
 `/api/cad` grava o `.sc` em `~/Documentos/forja-cad/<item>-<rev>.sc` (o sandbox
 do flatpak enxerga `xdg-documents`) e manda `doc.open` pelo protocolo de

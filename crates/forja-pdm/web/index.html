@@ -64,10 +64,19 @@
   .chip.draft { color:#d8b26a; border-color:#6a5527; }
   .chip.in_review { color:#7fb3d0; border-color:#2f6f8f; }
   .chip.released { color:#8fc79b; border-color:#3d6b47; }
+  .chip.open { color:#7fb3d0; border-color:#2f6f8f; }
+  .chip.in_triage { color:#c9a6d0; border-color:#5d3d66; }
+  .chip.accepted { color:#8fc79b; border-color:#3d6b47; }
+  .chip.deferred { color:#d8b26a; border-color:#6a5527; }
+  .chip.rejected { color:#d08a72; border-color:#6b3d2f; }
+  .chip.implemented { color:#8fc79b; border-color:#3d6b47; }
+  .chip.withdrawn { color:#8a9197; border-color:#3a4045; }
   .sub2 { margin:9px 0 3px; font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--dim); }
   .chg .body p { margin:0 0 6px; color:var(--ink); font-size:12px; }
   .chg .body p.ok { color:#8fc79b; }
   .chg .body p.bad { color:#d8a06a; }
+  .chg .body .desc { white-space:pre-line; font-size:12px; line-height:1.45; }
+  .chg .body .note { color:var(--dim); font-size:11px; }
   .chg ul { margin:0; padding:0; list-style:none; }
   .chg li { display:flex; gap:6px; align-items:baseline; padding:3px 0; border-bottom:1px solid #262c31; color:var(--ink); flex-wrap:wrap; }
   .chg li small { color:var(--dim); }
@@ -111,8 +120,11 @@
   <section id="tab-eco" hidden>
     <div id="eco-head">
       <span id="eco-summary">—</span>
-      <button id="eco-refresh" title="Reler as ECOs do TeamCraft">atualizar</button>
+      <button id="eco-refresh" title="Reler ECOs e ECRs do TeamCraft">atualizar</button>
     </div>
+    <div class="sub2">solicitações (ECR)</div>
+    <div id="requests"></div>
+    <div class="sub2">ordens de mudança (ECO)</div>
     <div id="changes"></div>
   </section>
 </aside>
@@ -584,6 +596,9 @@ function fillKernel(kernel, cached) {
 const STATUS = {
   draft: "rascunho", in_review: "em revisão", released: "liberada",
   cancelled: "cancelada", obsolete: "obsoleta",
+  open: "aberta", in_triage: "em triagem", accepted: "aceita",
+  deferred: "adiada", rejected: "rejeitada", implemented: "implementada",
+  withdrawn: "retirada",
 };
 const BOM_FIELDS = { quantity: "qtd", released_child_code: "liberada", child_unit: "unidade", notes: "nota" };
 const escapeHtml = (text) => String(text ?? "").replace(/[&<>"']/g, (c) => ({
@@ -613,18 +628,85 @@ async function loadChanges() {
   ecoProject = project;
   $("eco-summary").textContent = "lendo…";
   $("changes").innerHTML = "";
+  $("requests").innerHTML = "";
+  const [ecoSettled, ecrSettled] = await Promise.allSettled([
+    api("/api/changes", { project }),
+    api("/api/requests", { project }),
+  ]);
+  const eco = ecoSettled.status === "fulfilled" ? ecoSettled.value : null;
+  const ecr = ecrSettled.status === "fulfilled" ? ecrSettled.value : null;
+  const changes = (eco && eco.changes) || [];
+  const requests = (ecr && ecr.requests) || [];
+  const failed = [eco, ecr].filter((data) => !data).length;
+  const skipped = ((eco && eco.skipped) || 0) + ((ecr && ecr.skipped) || 0);
+  $("eco-summary").textContent = `${requests.length} ECR · ${changes.length} ECO de ${project}` +
+    (skipped ? ` · ${skipped} sem detalhe` : "") +
+    (failed ? ` · ${failed} lista(s) falharam` : "");
+  $("requests").innerHTML = ecr
+    ? (requests.length
+        ? requests.map(requestCard).join("")
+        : `<p class="empty">nenhuma solicitação com itens de ${escapeHtml(project)}</p>`)
+    : `<p class="empty">${escapeHtml(ecrSettled.reason.message)}</p>`;
+  $("changes").innerHTML = eco
+    ? (changes.length
+        ? changes.map(changeCard).join("")
+        : `<p class="empty">nenhuma ECO com itens de ${escapeHtml(project)}</p>`)
+    : `<p class="empty">${escapeHtml(ecoSettled.reason.message)}</p>`;
+}
+
+function requestCard(request) {
+  const when = request.decided_at
+    ? `decidida em ${day(request.decided_at)}`
+    : `pedida em ${day(request.created_at)}`;
+  return `<div class="chg ecr" data-number="${request.number}">
+    <div class="top"><span class="num">${request.number}</span>
+      <span class="chip ${request.status}">${STATUS[request.status] || request.status}</span>
+      <span class="when">${day(request.created_at)}</span></div>
+    <div class="title">${escapeHtml(request.title)}</div>
+    <div class="meta">${request.item_count || 0} item(ns) · ${escapeHtml(request.requested_by_name || "?")} · ${when}</div>
+    <div class="body"></div>
+  </div>`;
+}
+
+async function fillRequest(card) {
+  const body = card.querySelector(".body");
+  body.innerHTML = `<p class="empty">lendo ${card.dataset.number}…</p>`;
   try {
-    const data = await api("/api/changes", { project });
-    const changes = data.changes || [];
-    $("eco-summary").textContent = `${changes.length} ECO(s) de ${project}` +
-      (data.skipped ? ` · ${data.skipped} não carregaram` : "");
-    $("changes").innerHTML = changes.length
-      ? changes.map(changeCard).join("")
-      : `<p class="empty">nenhuma ECO com itens de ${escapeHtml(project)}</p>`;
+    body.innerHTML = requestBody(await api(`/api/requests/${encodeURIComponent(card.dataset.number)}`));
+    card.dataset.loaded = "1";
   } catch (error) {
-    $("eco-summary").textContent = "erro";
-    $("changes").innerHTML = `<p class="empty">${escapeHtml(error.message)}</p>`;
+    body.innerHTML = `<p class="empty">${escapeHtml(error.message)}</p>`;
   }
+}
+
+function requestBody(data) {
+  const request = data.change_request || {};
+  const items = data.items || [];
+  const changes = data.changes || [];
+  const comments = data.comments || [];
+  const out = [`<p class="desc">${escapeHtml(request.description || "")}</p>`];
+  out.push(`<div class="sub2">itens (${items.length})</div>`);
+  out.push(items.length
+    ? `<ul>${items.map((item) => `<li><b>${escapeHtml(item.item_number)}</b>
+        <small>${escapeHtml(item.item_type)}${item.latest_code ? ` · @${escapeHtml(item.latest_code)} ${escapeHtml(item.latest_state || "")}` : ""}</small></li>`).join("")}</ul>`
+    : `<p class="empty">sem item</p>`);
+  if (changes.length) {
+    out.push(`<div class="sub2">ordens ligadas (${changes.length})</div>`);
+    out.push(`<ul>${changes.map((change) => `<li><b>${change.number}</b>
+      <small>${STATUS[change.status] || change.status} · ${escapeHtml(change.title)}</small></li>`).join("")}</ul>`);
+  }
+  if (comments.length) {
+    out.push(`<div class="sub2">discussão (${comments.length})</div>`);
+    out.push(`<ul>${comments.map((comment) => `<li><b>${escapeHtml(comment.author_name || "?")}</b>
+      <small class="desc">${escapeHtml(comment.body || "")}</small></li>`).join("")}</ul>`);
+  }
+  if (request.decided_at) {
+    const comment = request.decision_comment ? ` — ${escapeHtml(request.decision_comment)}` : "";
+    out.push(`<div class="sub2">decisão</div><p>${escapeHtml(STATUS[request.status] || request.status)}
+      por <b>${escapeHtml(request.decided_by_name || "?")}</b> em ${day(request.decided_at)}${comment}</p>`);
+  }
+  out.push(`<p class="note">decidir (aceitar, adiar, rejeitar) e implementar são do TeamCraft; aqui só se lê.</p>`);
+  return out.join("");
 }
 
 function changeCard(change) {
@@ -812,6 +894,13 @@ $("changes").addEventListener("click", (event) => {
   if (card && event.target.closest(".top")) {
     const open = card.classList.toggle("open");
     if (open && !card.dataset.loaded) fillChange(card);
+  }
+});
+$("requests").addEventListener("click", (event) => {
+  const card = event.target.closest(".chg");
+  if (card && event.target.closest(".top")) {
+    const open = card.classList.toggle("open");
+    if (open && !card.dataset.loaded) fillRequest(card);
   }
 });
 $("fit").addEventListener("click", () => fit(lastGeometry));

@@ -92,6 +92,56 @@ pub fn detail(app: &App, number: &str) -> Result<Value> {
     Ok(value)
 }
 
+/// `GET /api/requests` — ECRs do projeto. A lista é rasa; o detalhe de cada uma
+/// (itens, ECOs ligadas, discussão) vem de `change_request`.
+pub fn requests(app: &App, project: Option<&str>, limit: usize) -> Result<Value> {
+    let raw = app.client.change_requests(limit)?;
+    let entries = raw
+        .get("change_requests")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+    let mut requests = Vec::with_capacity(entries.len());
+    let mut skipped = 0usize;
+    for entry in entries {
+        let Some(number) = entry.get("number").and_then(Value::as_str) else {
+            continue;
+        };
+        let detail = match app.client.change_request(number) {
+            Ok(detail) => detail,
+            Err(_) => {
+                skipped += 1;
+                continue;
+            }
+        };
+        let items = detail.get("items").cloned().unwrap_or_else(|| json!([]));
+        if let Some(project) = project {
+            if !belongs(&items, project) {
+                continue;
+            }
+        }
+        let mut row = entry;
+        row["item_count"] = detail
+            .get("items")
+            .and_then(Value::as_array)
+            .map(|items| json!(items.len()))
+            .unwrap_or_else(|| json!(0));
+        requests.push(row);
+    }
+    Ok(json!({
+        "project": project,
+        "total": raw.get("total"),
+        "skipped": skipped,
+        "requests": requests,
+    }))
+}
+
+/// `GET /api/requests/<n>` — a ECR completa. A Forja só mostra: aceitar, adiar,
+/// rejeitar e implementar são do TeamCraft (as permissões vêm em `can`).
+pub fn request(app: &App, number: &str) -> Result<Value> {
+    app.client.change_request(number)
+}
+
 /// `GET /api/diff?number=&from=&to=` — o que muda entre duas revisões.
 pub fn diff(app: &App, number: &str, from: &str, to: &str) -> Result<Value> {
     let before = app.client.revision(number, from)?;

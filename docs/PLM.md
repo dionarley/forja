@@ -30,7 +30,7 @@ volta para dentro do PDM.
 | 2 | Planejamento conectado ao CAD | **não existe** | — (adaptação: painel de pendências) |
 | 3 | Matérias-primas | **parcial** | material e massa já existem no modelo (1.721 g); catálogo e massa calculada ainda não |
 | 4 | Modelo digital 3D | **parcial** | 14 peças nativas + montagem de 22 posições; o `forja-pdm` já mostra a árvore do `.sc`, a miniatura nativa, a montagem peça por peça e o visualizador com cubo de orientação, enquadrar (F), girar (R), grade (G) e a peça centrada ao abrir |
-| 5 | Alterações formais | **parcial** | ECR/ECO e prontidão completos no TeamCraft; o `forja-pdm` lista as ECOs do projeto, mostra prontidão e revisores e faz diff de revisões (atributos, arquivos, BOM); submeter e aprovar continuam no TeamCraft |
+| 5 | Alterações formais | **parcial** | ECR/ECO e prontidão completos no TeamCraft; o `forja-pdm` lista as ECRs (estado, itens, ECOs ligadas, discussão, decisão) e as ECOs do projeto (prontidão, revisores, diff de atributos/arquivos/BOM); triar, submeter e aprovar continuam no TeamCraft |
 | 6 | Código-fonte no PLM | **fora de escopo** | código e documento são git; a revisão guarda no máximo o ponteiro |
 | 7 | Classificação IP | **parcial** | `classification` da revisão existe; sem taxonomia nem busca por classe |
 | 8 | Rede de fornecedores | **parcial** | só `unit_cost`; fornecedor e prazo não existem |
@@ -96,9 +96,10 @@ nenhuma peça sem `material` ou `mass_kg`.
 
 - árvore de BOM da revisão, multinível, com massa acumulada e quantidade.
 - painel de ECO/ECR: estado, revisões incluídas, prontidão (filho não liberado,
-  arquivo faltando), quem precisa revisar. **Feito para ECO** (aba *alterações*
-  do `forja-pdm`: lista, prontidão, revisores e diff de revisões); a triagem de
-  ECR ainda não aparece.
+  arquivo faltando), quem precisa revisar. **Feito na leitura** (aba *alterações*
+  do `forja-pdm`: ECR com estado, itens, ECOs ligadas, discussão e decisão; ECO
+  com prontidão, revisores e diff de revisões); decidir e submeter continuam no
+  TeamCraft.
 - impacto de uma peça: onde é usada, quais ECO/ECR abertas a tocam.
 - diff entre revisões: BOM, arquivos, atributos, material.
 - clique na linha da BOM abre a peça no visualizador.
