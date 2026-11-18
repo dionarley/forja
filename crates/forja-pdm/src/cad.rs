@@ -96,7 +96,33 @@ fn control_dir() -> Option<PathBuf> {
 }
 
 /// Manda `doc.open` pelo protocolo de controle, sem esperar o app para sempre.
+///
+/// O app só abre arquivo dentro das pastas que ele libera. Onde ele recusa, a
+/// segunda tentativa declara a pasta em `design_folders`: o app pergunta à
+/// pessoa uma vez e memoriza em `agent_always_allow`. `--allow-path` no início
+/// do app evita a pergunta.
 fn control(path: &Path) -> Control {
+    let parent = path
+        .parent()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_default();
+    match execute(path, None) {
+        Control::Refused(error) if outside_folders(&error) => match execute(path, Some(&parent)) {
+            Control::Refused(error) if outside_folders(&error) => Control::Refused(format!(
+                "{error} — libere {parent} no app ou suba com `--allow-path {parent}`"
+            )),
+            other => other,
+        },
+        other => other,
+    }
+}
+
+fn outside_folders(error: &str) -> bool {
+    error.contains("outside the folders this agent may use")
+}
+
+/// Uma rodada do protocolo. `design_folder` declara a pasta para o app liberar.
+fn execute(path: &Path, design_folder: Option<&str>) -> Control {
     let Some(dir) = control_dir() else {
         return Control::Unreachable("HOME indisponível para achar o controle".to_string());
     };
@@ -137,17 +163,23 @@ fn control(path: &Path) -> Control {
         Err(_) => return Control::Unreachable("o SolidCraft não está rodando".to_string()),
     };
     let _ = stream.set_write_timeout(Some(Duration::from_secs(2)));
-    let _ = stream.set_read_timeout(Some(Duration::from_secs(5)));
+    // Declarar a pasta faz o app perguntar à pessoa: a espera é maior.
+    let wait = if design_folder.is_some() { 45 } else { 5 };
+    let _ = stream.set_read_timeout(Some(Duration::from_secs(wait)));
 
+    let mut params = json!({
+        "allow_paths": [path.parent().map(|p| p.to_string_lossy().to_string()).unwrap_or_default()],
+        "command": "doc.open",
+        "params": { "path": path.to_string_lossy() },
+    });
+    if let Some(folder) = design_folder {
+        params["design_folders"] = json!([folder]);
+    }
     let request = json!({
         "id": 1,
         "token": token,
         "method": "engine.execute",
-        "params": {
-            "allow_paths": [path.parent().map(|p| p.to_string_lossy().to_string()).unwrap_or_default()],
-            "command": "doc.open",
-            "params": { "path": path.to_string_lossy() },
-        },
+        "params": params,
     });
     let mut line = request.to_string();
     line.push('\n');
@@ -168,6 +200,9 @@ fn control(path: &Path) -> Control {
             ),
             Err(_) => Control::Refused(format!("resposta inesperada do app: {}", reply.trim())),
         },
+        Err(_) if design_folder.is_some() => Control::Refused(format!(
+            "o app não respondeu em {wait} s — veja na janela do SolidCraft se há uma permissão de pasta esperando"
+        )),
         Err(_) => Control::Refused(
             "o app não respondeu em 5 s (a janela pode estar ocupada com um diálogo)".to_string(),
         ),

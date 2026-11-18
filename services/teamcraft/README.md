@@ -66,6 +66,12 @@ rodando, tenta `flatpak run io.tangencylabs.solidcraft <arquivo>`. `FORJA_CAD_DI
 trocam os padrões. Na interface, o botão `SC` de cada linha da árvore e o
 `SolidCraft` do viewport (tecla `S`) chamam essa rota com o que está na tela.
 
+O app só abre arquivo dentro das pastas que ele libera. Fora delas, o `forja-pdm`
+repete `doc.open` declarando a pasta em `design_folders`: o app mostra uma
+pergunta de permissão (aceitar com "sempre" memoriza em `agent_always_allow`) e
+espera até 45 s pela resposta. Subir o app com `--allow-path <pasta>` dispensa a
+pergunta.
+
 O visualizador é **autocontido**: o three.js (MIT) vai embutido em
 `crates/forja-pdm/web/vendor/` e servido em `/vendor/`, sem CDN — o serviço sobe
 numa rede isolada e continua funcionando.
